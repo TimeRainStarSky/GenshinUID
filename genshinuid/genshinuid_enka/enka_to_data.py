@@ -55,7 +55,16 @@ with open(MAP_PATH / avatarName2Element_fileName, 'r', encoding='UTF-8') as f:
     avatarName2Element = json.load(f)
 
 
-async def enkaToData(uid: str, enka_data: Optional[dict] = None) -> dict:
+async def enka_to_data(uid: str, enka_data: Optional[dict] = None) -> dict:
+    """
+        :说明:
+          访问enkaAPI并转换为genshinUID的数据Json。
+        :参数:
+          * ``uid: str``: 玩家uid。
+          * ``enka_data: Optional[dict] = None``: 来自enka的dict, 可留空。
+        :返回:
+          * ``刷新完成提示语: str``: 包含刷新成功的角色列表。
+    """
     if enka_data:
         pass
     else:

@@ -8,7 +8,7 @@ from nonebot.permission import SUPERUSER
 
 from ..util.handle_exception import handle_exception
 from .draw_char_card import *
-from .enka_to_data import *
+from .enka_to_data import enka_to_data
 
 refresh = on_command('强制刷新', priority=priority)
 get_charcard_list = on_command('毕业度统计', priority=priority)
@@ -16,11 +16,15 @@ get_charcard_list = on_command('毕业度统计', priority=priority)
 refresh_scheduler = require('nonebot_plugin_apscheduler').scheduler
 
 @refresh_scheduler.scheduled_job('cron', hour='4')
-async def daily_refresh_charData():
-    await refresh_charData()
+async def daily_refresh_char_data():
+    await refresh_char_data()
 
 
-async def refresh_charData():
+async def refresh_char_data():
+    """
+        :说明:
+          刷新全部绑定uid的角色展柜面板进入本地缓存。
+    """
     conn = sqlite3.connect('ID_DATA.db')
     c = conn.cursor()
     cursor = c.execute('SELECT UID  FROM UIDDATA WHERE UID IS NOT NULL')
@@ -29,7 +33,7 @@ async def refresh_charData():
     for row in c_data:
         uid = row[0]
         try:
-            im = await enkaToData(uid)
+            im = await enka_to_data(uid)
             logger.info(im)
             t += 1
             await asyncio.sleep(18 + random.randint(2, 6))
@@ -57,7 +61,7 @@ async def send_card_info(matcher: Matcher,
         if m == '全部数据':
             if qid in superusers:
                 await refresh.send('开始刷新全部数据，这可能需要相当长的一段时间！！')
-                im = await refresh_charData()
+                im = await refresh_char_data()
                 await matcher.finish(str(im))
                 return
             else:
@@ -65,7 +69,7 @@ async def send_card_info(matcher: Matcher,
         else:
             uid = await select_db(qid, mode='uid')
             uid = uid[0]
-    im = await enkaToData(uid)
+    im = await enka_to_data(uid)
     await matcher.finish(str(im))
     logger.info(f'UID{uid}获取角色数据成功！')
 

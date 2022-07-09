@@ -18,6 +18,10 @@ async def getEquipName(name: str) -> str:
     return re
 
 async def panle2Json() -> None:
+    """
+        :说明:
+          访问DATA_PATH并转换数据为dmgMap.json。
+    """
     wb=openpyxl.load_workbook(DATA_PATH / '参考面板2.7（上）.xlsx',data_only = True)
     sheet=wb.active
 
