@@ -1,0 +1,1 @@
+get_event = on_command('活动列表', priority=priority)
