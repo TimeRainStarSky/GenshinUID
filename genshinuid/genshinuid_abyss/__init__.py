@@ -1,0 +1,1 @@
+get_abyss_info = on_regex('([0-9]+)(深渊)([0-9]\d{0,2})', priority=priority)
