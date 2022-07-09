@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageChops
 from httpx import get
 from nonebot import logger
 
-from .dmgCalc.dmgCalc import *
+from .dmgCalc.dmg_calc import *
 
 R_PATH = Path(__file__).parents[0]
 TEXT_PATH = R_PATH / 'texture2D'
