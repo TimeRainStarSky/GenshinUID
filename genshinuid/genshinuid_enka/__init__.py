@@ -2,6 +2,7 @@ from .draw_char_card import *
 from .enka_to_data import enka_to_data
 
 refresh = on_command('强制刷新', priority=priority)
+get_charcard = on_regex('查询', priority=priority)
 get_charcard_list = on_command('毕业度统计', priority=priority)
 
 refresh_scheduler = require('nonebot_plugin_apscheduler').scheduler
@@ -37,7 +38,7 @@ async def refresh_char_data():
 
 
 @refresh.handle()
-@handle_exception('面板')
+@handle_exception('强制刷新')
 async def send_card_info(matcher: Matcher,
                          event: Union[GroupMessageEvent, PrivateMessageEvent],
                          args: Message = CommandArg()):
