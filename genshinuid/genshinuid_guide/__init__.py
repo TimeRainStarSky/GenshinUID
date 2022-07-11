@@ -1,13 +1,3 @@
-from pathlib import Path
-
-from nonebot import Bot, get_bot, get_driver, on_command, on_regex, require
-from nonebot.adapters.onebot.v11 import (ActionFailed, GroupMessageEvent, Message, MessageEvent, MessageSegment,
-                                         PRIVATE_FRIEND, PrivateMessageEvent)
-from nonebot.exception import FinishedException
-from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, Depends, RegexGroup
-from nonebot.permission import SUPERUSER
-
 get_guide_pic = on_regex('([\u4e00-\u9fa5]+)(推荐|攻略)', priority=priority)
 get_bluekun_pic = on_command('参考面板', priority=priority)
 

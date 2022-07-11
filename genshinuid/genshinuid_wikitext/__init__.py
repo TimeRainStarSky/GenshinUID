@@ -1,13 +1,3 @@
-from nonebot import Bot, get_bot, get_driver, on_command, on_regex, require
-from nonebot.adapters.onebot.v11 import (ActionFailed, GroupMessageEvent, Message, MessageEvent, MessageSegment,
-                                         PRIVATE_FRIEND, PrivateMessageEvent)
-from nonebot.exception import FinishedException
-from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, Depends, RegexGroup
-from nonebot.permission import SUPERUSER
-
-from ..util.handle_exception import handle_exception
-
 get_weapon = on_command('武器', priority=priority)
 get_char = on_command('角色', priority=priority)
 get_cost = on_command('材料', priority=priority)

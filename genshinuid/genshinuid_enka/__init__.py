@@ -1,12 +1,3 @@
-from nonebot import Bot, get_bot, get_driver, on_command, on_regex, require
-from nonebot.adapters.onebot.v11 import (ActionFailed, GroupMessageEvent, Message, MessageEvent, MessageSegment,
-                                         PRIVATE_FRIEND, PrivateMessageEvent)
-from nonebot.exception import FinishedException
-from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, Depends, RegexGroup
-from nonebot.permission import SUPERUSER
-
-from ..util.handle_exception import handle_exception
 from .draw_char_card import *
 from .enka_to_data import enka_to_data
 
