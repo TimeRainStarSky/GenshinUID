@@ -1,3 +1,5 @@
+from ..re_import import * # noqa: F401, F403
+
 get_weapon = on_command('武器', priority=priority)
 get_char = on_command('角色', priority=priority)
 get_cost = on_command('材料', priority=priority)

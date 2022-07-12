@@ -1,4 +1,5 @@
-import draw_event_img
+from ..re_import import * # noqa: F401, F403
+from .draw_event_img import draw_event_img
 
 TEXT_PATH = Path(__file__).parents[0] / 'texture2d'
 
@@ -16,5 +17,5 @@ async def send_events(matcher: Matcher, args: Message = CommandArg()):
                 im = MessageSegment.image(f.read())
             break
         else:
-            await draw_event_pic()
+            await draw_event_img()
     await matcher.finish(im)

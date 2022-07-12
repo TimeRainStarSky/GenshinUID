@@ -1,4 +1,4 @@
-import draw_event_data
+from .get_event_data import get_genshin_events
 
 
 async def get_month_and_time(time_data: str) -> List:
@@ -22,7 +22,7 @@ async def get_month_and_time(time_data: str) -> List:
     return [month, time]
 
 
-async def draw_event_pic() -> None:
+async def draw_event_img() -> None:
     """
         :说明:
             绘制原神活动列表图片，存放至同级目录``event.png``。
