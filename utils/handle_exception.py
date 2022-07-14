@@ -1,5 +1,6 @@
-from ..import_Lib import * # noqa
+from nonebot import logger
 from functools import wraps
+from nonebot.exception import FinishedException, ActionFailed
 
 def handle_exception(name: str, log_msg: str = None, fail_msg: str = None):
     """

@@ -1,59 +1,85 @@
+import json
+from httpx import AsyncClient
+from ..utils.minigg_api import * # noqa: F401, F403
+
 async def get_audio_info(name: str, audioid: str, language: str = 'cn') -> str:
     """
-        :说明:
-          访问miniggAPI获得原神角色音频信息。
-        :参数:
-          * ``name: str``: 原神角色名称。
-          * ``audioid: str``: 语音id。
-          * ``language: str``: 默认为cn。
-        :返回:
-          * ``刷新完成提示语: str``: 包含刷新成功的角色列表。
+    :说明:
+      访问miniggAPI获得原神角色音频信息。
+    :参数:
+      * name (str): 原神角色名称。
+      * audioid (str): 语音id。
+      * language (str): 默认为cn。
+    :返回:
+      * req.text (str): url。
     """
-    url = 'https://genshin.minigg.cn/'
     async with AsyncClient() as client:
         req = await client.get(
-            url=url,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/95.0.4638.69 Safari/537.36',
-                'Referer'   : 'https://genshin.minigg.cn/index.html'},
+            url = MINIGG_AUDIO_URL,
             params={'characters': name, 'audioid': audioid, 'language': language}
         )
     return req.text
 
 
-async def get_weapon_info(name, level=None):
+async def get_weapon_info(name, level = None) -> dict:
+    """
+    :说明:
+      访问miniggAPI获得原神武器信息。
+      https://info.minigg.cn/weapons?query=飞雷
+    :参数:
+      * name (str): 武器名称。
+      * level (str): 武器等级。
+    :返回:
+      * data (dict): 武器信息。
+    :Template:
+      * data['name'] (str): 武器名称。
+      * data['description'] (str): 武器描述。
+      * data['weapontype'] (str): 武器类型。
+    """
     if level:
         params = {'query': name, 'stats': level}
     else:
         params = {'query': name}
     async with AsyncClient() as client:
         req = await client.get(
-            url='https://info.minigg.cn/weapons',
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/95.0.4638.69 Safari/537.36'},
-            params=params
+            url = MINIGG_WEAPON_URL,
+            params = params
         )
     data = json.loads(req.text)
     return data
 
 
-async def get_misc_info(mode, name):
-    url = 'https://info.minigg.cn/{}'.format(mode)
+async def get_misc_info(mode: str, name: str):
+    """
+    :说明:
+      一些杂项信息。
+    :参数:
+      * name (str): 'enemies', 'foods', 'artifacts'。
+      * name (str): 参数。
+    :返回:
+      * data (str): 获取数据信息。
+    """
+    url = MINIGG_MISC_URL.format(mode)
     async with AsyncClient() as client:
         req = await client.get(
-            url=url,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/97.0.4692.71 Safari/537.36'},
-            params={'query': name}
+            url = url,
+            params = {'query': name}
         )
     data = json.loads(req.text)
     return data
 
 
-async def get_char_info(name, mode='char', level=None):
+async def get_char_info(name , mode = 'char', level = None):
+    """
+    :说明:
+      返回角色信息。
+    :参数:
+      * name (str): 角色名称。
+      * mode (str): 'char', 'talents', 'costs'。
+      * level (str): 角色等级。
+    :返回:
+      * data (str): 获取数据信息。
+    """
     url2 = None
     url3 = None
     data2 = None
@@ -73,40 +99,21 @@ async def get_char_info(name, mode='char', level=None):
 
     if url2:
         async with AsyncClient() as client:
-            req = await client.get(
-                url=url2,
-                headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                                  'Chrome/95.0.4638.69 Safari/537.36',
-                    'Referer'   : 'https://genshin.minigg.cn/index.html'})
+            req = await client.get(url = url2)
             data2 = json.loads(req.text)
             if 'errcode' in data2:
                 async with AsyncClient() as client_:
-                    req = await client_.get(
-                        url=url3,
-                        headers={
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, '
-                                          'like Gecko) Chrome/95.0.4638.69 Safari/537.36',
-                            'Referer'   : 'https://genshin.minigg.cn/index.html'})
+                    req = await client_.get(url = url3)
                     data2 = json.loads(req.text)
 
     async with AsyncClient() as client:
-        req = await client.get(
-            url=url,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/95.0.4638.69 Safari/537.36',
-                'Referer'   : 'https://genshin.minigg.cn/index.html'})
+        req = await client.get(url = url)
         try:
             data = json.loads(req.text)
             if 'errcode' in data:
                 async with AsyncClient() as client_:
                     req = await client_.get(
-                        url=url + '&matchCategories=true',
-                        headers={
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, '
-                                          'like Gecko) Chrome/95.0.4638.69 Safari/537.36',
-                            'Referer'   : 'https://genshin.minigg.cn/index.html'})
+                        url = url + '&matchCategories=true')
                     data = json.loads(req.text)
         except:
             data = None

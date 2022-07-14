@@ -1,3 +1,4 @@
+import re
 import base64
 import sqlite3
 import json
@@ -7,7 +8,7 @@ from httpx import AsyncClient
 from datetime import datetime
 from time import strptime, strftime, localtime
 
-from nonebot import Bot, get_bot, get_driver, on_command, on_regex, require
+from nonebot import Bot, get_bot, get_driver, on_command, on_regex, require, logger
 from nonebot.adapters.onebot.v11 import (ActionFailed, GroupMessageEvent, Message, MessageEvent, MessageSegment,
                                          PRIVATE_FRIEND, PrivateMessageEvent)
 from nonebot.exception import FinishedException, ActionFailed

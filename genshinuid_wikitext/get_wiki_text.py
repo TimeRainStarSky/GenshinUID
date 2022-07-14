@@ -1,4 +1,8 @@
-from .get_minigg_data import *
+import re
+import math
+from .get_wiki_template import * # noqa
+from .get_minigg_data import get_audio_info, get_misc_info, get_char_info, get_weapon_info
+
 
 async def audio_wiki(name, message):
     async def get(_audioid):

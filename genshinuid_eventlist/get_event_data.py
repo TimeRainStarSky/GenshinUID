@@ -1,3 +1,6 @@
+import json
+from httpx import AsyncClient
+
 async def get_genshin_events(mode: str = 'List') -> dict:
     """
         :说明:

@@ -1,4 +1,4 @@
-from ..re_import import * # noqa: F401, F403
+from ..all_import import * # noqa: F401, F403
 from .draw_event_img import draw_event_img
 
 TEXT_PATH = Path(__file__).parents[0] / 'texture2d'

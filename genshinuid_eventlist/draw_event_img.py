@@ -1,3 +1,6 @@
+from re import findall
+from bs4 import BeautifulSoup
+from typing import Any, Union, List, Tuple
 from .get_event_data import get_genshin_events
 
 

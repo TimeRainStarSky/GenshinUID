@@ -1,4 +1,5 @@
-from ..re_import import * # noqa: F401, F403
+from ..all_import import * # noqa: F401, F403
+from .get_wiki_text import audio_wiki, artifacts_wiki, foods_wiki, enemies_wiki, weapon_wiki, char_wiki
 
 get_weapon = on_command('武器', priority=priority)
 get_char = on_command('角色', priority=priority)

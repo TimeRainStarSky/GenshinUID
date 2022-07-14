@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 with open(Path(__file__).parents[0] / 'index' / 'char_alias.json', 'r', encoding='utf8') as fp:
