@@ -1,34 +1,49 @@
+from httpx import get
 from re import findall
+from io import BytesIO
+from pathlib import Path
 from bs4 import BeautifulSoup
+from datetime import datetime
 from typing import Any, Union, List, Tuple
 from .get_event_data import get_genshin_events
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from ..utils.genshin_fonts import genshin_font_origin
 
+TEXT_PATH = Path(__file__).parent / 'texture2d'
+IMG_PATH = Path(__file__).parent / 'event.jpg'
 
 async def get_month_and_time(time_data: str) -> List:
     """
-        :说明:
-            接收时间字符串`2022/02/09 18:59:59`
-            转换为`['02/09', '18:59PM']`
-        :参数:
-        * ``time_data: str``: 时间字符串。
-        :返回:
-        * ``[month, time]: list``: ['02/09', '18:59PM']。
+    :说明:
+      接收时间字符串`2022/02/09 18:59:59`
+      转换为`['02/09', '18:59PM']`
+    :参数:
+      * time_data (str): 时间字符串。
+    :返回:
+      * [month, time] (list): ['02/09', '18:59PM']。
     """
-    time_data = time_data.split(' ')
-    time_data[0] = time_data[0].replace('-', '/')
-    month = time_data[0].split('/', 1)[1]
-    time = ':'.join(time_data[1].split(':')[:-1])
-    if int(time.split(':')[0]) <= 12:
-        time = time + 'AM'
+    if '永久开放' in time_data:
+        month = time_data[:5]
+        time = '永久开放'
+    if '更新后' in time_data:
+        month = time_data[:5]
+        time = '更新后'
     else:
-        time = time + 'PM'
+        time_data = time_data.split(' ')
+        time_data[0] = time_data[0].replace('-', '/')
+        month = time_data[0].split('/', 1)[1]
+        time = ':'.join(time_data[1].split(':')[:-1])
+        if int(time.split(':')[0]) <= 12:
+            time = time + 'AM'
+        else:
+            time = time + 'PM'
     return [month, time]
 
 
 async def draw_event_img() -> None:
     """
-        :说明:
-            绘制原神活动列表图片，存放至同级目录``event.png``。
+    :说明:
+      绘制原神活动列表图片，存放至同级目录``event.png``。
     """
     raw_data = await get_genshin_events('List')
     raw_time_data = await get_genshin_events('Content')
@@ -64,8 +79,10 @@ async def draw_event_img() -> None:
 
                             if ' ' in time_datas[1]:
                                 month_end, time_end = await get_month_and_time(time_datas[1])
+                            elif '版本结束' in time_datas[1]:
+                                month_end, time_end = time_datas[1][:5], '结束后'
                             else:
-                                month_end, time_end = '永久开放', '更新后'
+                                month_end, time_end = '更新后', '永久开放'
                             k['start_time'] = [month_start, time_start]
                             k['end_time'] = [month_end, time_end]
                         elif '活动内容' in time_data:
@@ -91,6 +108,8 @@ async def draw_event_img() -> None:
                                         time_data_end = findall('<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>', time_data_end)[0]
                                         month_end, time_end = await get_month_and_time(time_data_end)
                                         k['end_time'] = [month_end, time_end]
+                                    elif '版本结束' in time_data_end:
+                                        k['end_time'] = [time_data_end[1:6], '结束']
                                     else:
                                         k['end_time'] = ['更新后', '永久开放']
                                     break
@@ -132,7 +151,7 @@ async def draw_event_img() -> None:
     font_m = genshin_font_origin(34)
     font_s = genshin_font_origin(28)
     
-    now_time = datetime.datetime.now().strftime('%Y/%m/%d')
+    now_time = datetime.now().strftime('%Y/%m/%d')
     event_title_path = TEXT_PATH / 'event_title.png'
     event_title = Image.open(event_title_path)
     event_title_draw = ImageDraw.Draw(event_title)
@@ -178,5 +197,5 @@ async def draw_event_img() -> None:
         base_img.paste(event_img, (0, 450 + len(event_data['normal_event']) * 280 + 380 * index), event_img)
 
     base_img = base_img.convert('RGB')
-    base_img.save('event.jpg', format='JPEG', subsampling=0, quality=90)
+    base_img.save(IMG_PATH, format='JPEG', subsampling=0, quality=90)
     return

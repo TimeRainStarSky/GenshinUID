@@ -7,6 +7,7 @@ from typing import Any, Union, List, Tuple
 from httpx import AsyncClient
 from datetime import datetime
 from time import strptime, strftime, localtime
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from nonebot import Bot, get_bot, get_driver, on_command, on_regex, require, logger
 from nonebot.adapters.onebot.v11 import (ActionFailed, GroupMessageEvent, Message, MessageEvent, MessageSegment,

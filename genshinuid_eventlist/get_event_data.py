@@ -3,15 +3,15 @@ from httpx import AsyncClient
 
 async def get_genshin_events(mode: str = 'List') -> dict:
     """
-        :说明:
-            接受mode: str = 'List'或'Calendar'或'Content'。
-            'List'模式为米游社列表, 包含最基本的信息。
-            'Content'模式为游戏内活动公告, 包含html页面, 时间信息来源。
-            'Calendar'模式为米游社日历, 一般不用。
-        :参数:
-        * ``mode: str``: 'List'或'Calendar'或'Content'。
-        :返回:
-        * ``data: dict``: json.loads。
+    :说明:
+      接受mode: str = 'List'或'Calendar'或'Content'。
+      List'模式为米游社列表, 包含最基本的信息。
+      'Content'模式为游戏内活动公告, 包含html页面, 时间信息来源。
+      'Calendar'模式为米游社日历, 一般不用。
+    :参数:
+      * mode (str): 'List'或'Calendar'或'Content'。
+    :返回:
+      * data (dict): json.loads。
     """
     if mode == 'Calendar':
         now_time = datetime.datetime.now().strftime('%Y-%m-%d')
