@@ -1,6 +1,6 @@
 import json
 from httpx import AsyncClient
-from ..utils.minigg_api import * # noqa: F401, F403
+from ..utils.minigg_api.minigg_api import * # noqa: F401, F403
 
 async def get_audio_info(name: str, audioid: str, language: str = 'cn') -> str:
     """

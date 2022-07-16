@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Union, List, Tuple
 from .get_event_data import get_genshin_events
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
-from ..utils.genshin_fonts import genshin_font_origin
+from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
 
 TEXT_PATH = Path(__file__).parent / 'texture2d'
 IMG_PATH = Path(__file__).parent / 'event.jpg'

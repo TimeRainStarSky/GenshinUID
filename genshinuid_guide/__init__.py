@@ -6,8 +6,8 @@ from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, RegexGroup
 
-from ..utils.handle_exception import handle_exception
-from ..utils.alias_to_char_name import alias_to_char_name
+from ..utils.exception.handle_exception import handle_exception
+from ..utils.alias.alias_to_char_name import alias_to_char_name
 
 get_guide_pic = on_regex('([\u4e00-\u9fa5]+)(推荐|攻略)')
 get_bluekun_pic = on_command('参考面板')

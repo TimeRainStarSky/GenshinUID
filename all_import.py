@@ -17,8 +17,8 @@ from nonebot.matcher import Matcher
 from nonebot.params import CommandArg, Depends, RegexGroup
 from nonebot.permission import SUPERUSER
 
-from .utils.handle_exception import handle_exception
-from .utils.genshin_fonts import genshin_font_origin
-from .utils.alias_to_char_name import alias_to_char_name
+from .utils.exception.handle_exception import handle_exception
+from .utils.genshin_fonts.genshin_fonts import genshin_font_origin
+from .utils.alias.alias_to_char_name import alias_to_char_name
 
 priority = 2

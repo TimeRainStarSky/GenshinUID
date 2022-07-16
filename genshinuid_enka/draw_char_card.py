@@ -8,6 +8,7 @@ from httpx import get
 from nonebot import logger
 
 from .dmgCalc.dmg_calc import *
+from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
 
 R_PATH = Path(__file__).parents[0]
 TEXT_PATH = R_PATH / 'texture2D'
@@ -43,9 +44,6 @@ with open(ETC_PATH / 'avatarOffsetMap.json', 'r', encoding='UTF-8') as f:
 # 引入offset2
 with open(ETC_PATH / 'avatarCardOffsetMap.json', 'r', encoding='UTF-8') as f:
     avatarCardOffsetMap = json.load(f)
-
-def genshin_font_origin(size: int) -> ImageFont:
-    return ImageFont.truetype(str(TEXT_PATH / 'yuanshen_origin.ttf'), size=size)
 
 
 def get_star_png(star: int) -> Image:
