@@ -1,5 +1,9 @@
 import re
 import math
+import random
+from io import BytesIO
+from pathlib import Path
+from httpx import AsyncClient
 from .get_wiki_template import * # noqa
 from .get_minigg_data import get_audio_info, get_misc_info, get_char_info, get_weapon_info
 
@@ -23,7 +27,7 @@ async def audio_wiki(name, message):
                     audio_json[_audioid].remove(audioid1)
 
     if name == '列表':
-        with open(os.path.join(INDEX_PATH, '语音.png'), 'rb') as f:
+        with open(Path(__file__).parent / '语音列表.png', 'rb') as f:
             imgmes = f.read()
         return imgmes
     elif name == '':
