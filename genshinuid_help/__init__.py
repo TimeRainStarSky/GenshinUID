@@ -4,7 +4,7 @@ get_help = on_command('gs帮助')
 
 HELP_IMG = Path(__file__).parent / 'help.png'
 
-@get_guide_pic.handle()
+@get_help.handle()
 @handle_exception('建议')
 async def send_guide_pic(matcher: Matcher):
     await matcher.finish(MessageSegment.image(HELP_IMG))

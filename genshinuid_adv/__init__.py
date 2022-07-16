@@ -7,12 +7,14 @@ get_weapon_adv = on_regex('([\u4e00-\u9fa5]+)(能给谁|给谁用|要给谁|谁�
 @get_char_adv.handle()
 @handle_exception('建议')
 async def send_char_adv(matcher: Matcher, args: Tuple[Any, ...] = RegexGroup()):
-    im = await char_adv(args[0])
+    name = await alias_to_char_name(str(args[0]))
+    im = await char_adv(name)
     await matcher.finish(im)
 
 
 @get_weapon_adv.handle()
 @handle_exception('建议')
 async def send_weapon_adv(matcher: Matcher, args: Tuple[Any, ...] = RegexGroup()):
-    im = await weapon_adv(args[0])
+    name = await alias_to_char_name(str(args[0]))
+    im = await weapon_adv(name)
     await matcher.finish(im)
