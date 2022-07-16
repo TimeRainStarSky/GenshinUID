@@ -9,7 +9,7 @@ async def alias_to_char_name(char_name: str) -> str:
         if char_name in i:
             char_name = i
         else:
-            for k in char_name[i]:
+            for k in char_alias_data[i]:
                 if char_name in k:
                     char_name = i
     return char_name
