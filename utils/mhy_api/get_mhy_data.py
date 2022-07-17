@@ -1,5 +1,6 @@
 import json
 import copy
+from nonebot import logger
 from httpx import AsyncClient
 from aiohttp import ClientSession
 from .mhy_api import *
@@ -18,6 +19,7 @@ _HEADER = {
     'KHTML, like Gecko) miHoYoBBS/2.11.1',
     'x-rpc-client_type': '5',
     'Referer': 'https://webstatic.mihoyo.com/',
+    'Origin': 'https://webstatic.mihoyo.com',
 }
 
 
@@ -27,7 +29,6 @@ async def _mhy_request(
     header: str = _HEADER,
     params: dict = None,
     data: dict = None,
-    client: ClientSession = None,
 ) -> dict:
     """
     :说明:
@@ -43,19 +44,11 @@ async def _mhy_request(
       * result (dict): json.loads()解析字段。
     """
     try:
-        if client:
+        async with AsyncClient() as client:
             if method == 'get':
                 req = await client.get(url, headers=header, params=params)
             elif method == 'post':
-                req = await client.post(url, headers=header, params=params, json=data)
-        else:
-            async with AsyncClient() as client:
-                if method == 'get':
-                    req = await client.get(url, headers=header, params=params)
-                elif method == 'post':
-                    req = await client.post(
-                        url, headers=header, params=params, json=data
-                    )
+                req = await client.post(url, headers=header, json=data)
         result = json.loads(req.text)
         return result
     except:
@@ -208,24 +201,20 @@ async def get_character(uid, character_ids, ck, server_id='cn_gf01') -> dict:
     HEADER = copy.deepcopy(_HEADER)
     HEADER['Cookie'] = ck
     HEADER['DS'] = get_ds_token(
-        'role_id=' + uid + '&server=' + server_id + '&character_ids=' + character_ids
+        '', {'character_ids': character_ids, 'role_id': uid, 'server': server_id}
     )
     data = await _mhy_request(
         url=PLAYER_DETAIL_INFO_URL,
-        method='get',
+        method='post',
         header=HEADER,
-        data={
-            'server': server_id,
-            'role_id': uid,
-            'character_ids': character_ids,
-        },
+        data={'character_ids': character_ids, 'role_id': uid, 'server': server_id},
     )
     return data
 
 
 async def get_calculate_info(
     client: ClientSession, uid, char_id, ck, name, server_id='cn_gf01'
-) -> dict:
+):
     if uid[0] == '5':
         server_id = 'cn_qd01'
     HEADER = copy.deepcopy(_HEADER)
@@ -233,13 +222,12 @@ async def get_calculate_info(
     HEADER['DS'] = get_ds_token(
         'uid={}&avatar_id={}&region={}'.format(uid, char_id, server_id)
     )
-    data = await _mhy_request(
+    req = await client.get(
         url=CALCULATE_INFO_URL,
-        method='get',
-        header=HEADER,
+        headers=HEADER,
         params={'avatar_id': char_id, 'uid': uid, 'region': server_id},
-        client=client,
     )
+    data = await req.json()
     data.update({'name': name})
     return data
 
