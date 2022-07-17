@@ -1,9 +1,12 @@
 import hashlib
 import time
+import json
 import random
+import string
+
 
 def random_hex(length):
-    result = hex(random.randint(0, 16 ** length)).replace('0x', '').upper()
+    result = hex(random.randint(0, 16**length)).replace('0x', '').upper()
     if len(result) < length:
         result = '0' * (length - len(result)) + result
     return result
