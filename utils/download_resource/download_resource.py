@@ -1,6 +1,7 @@
-from httpx import get
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+from httpx import get
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 RESOURCE_PATH = Path(__file__).parents[2] / 'resource'
 WEAPON_PATH = RESOURCE_PATH / 'weapon'
@@ -33,7 +34,9 @@ def get_char_done_pic(_id: str, url: str, star: int):
         star2_path = TEXT_PATH / '5star_2.png'
     star_1 = Image.open(star1_path)
     star_2 = Image.open(star2_path)
-    char_img = Image.open(BytesIO(char_data)).resize((104, 104), Image.ANTIALIAS)
+    char_img = Image.open(BytesIO(char_data)).resize(
+        (104, 104), Image.ANTIALIAS
+    )
     star_1.paste(char_img, (12, 15), char_img)
     star_1.paste(star_2, (0, 0), star_2)
     star_1.save(CHAR_DONE_PATH / str(_id) + '.png')

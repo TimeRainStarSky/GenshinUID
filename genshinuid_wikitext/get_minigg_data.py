@@ -1,6 +1,9 @@
 import json
+
 from httpx import AsyncClient
-from ..utils.minigg_api.minigg_api import * # noqa: F401, F403
+
+from ..utils.minigg_api.minigg_api import *  # noqa: F401, F403
+
 
 async def get_audio_info(name: str, audioid: str, language: str = 'cn') -> str:
     """
@@ -15,13 +18,17 @@ async def get_audio_info(name: str, audioid: str, language: str = 'cn') -> str:
     """
     async with AsyncClient() as client:
         req = await client.get(
-            url = MINIGG_AUDIO_URL,
-            params={'characters': name, 'audioid': audioid, 'language': language}
+            url=MINIGG_AUDIO_URL,
+            params={
+                'characters': name,
+                'audioid': audioid,
+                'language': language,
+            },
         )
     return req.text
 
 
-async def get_weapon_info(name, level = None) -> dict:
+async def get_weapon_info(name, level=None) -> dict:
     """
     :说明:
       访问miniggAPI获得原神武器信息。
@@ -41,10 +48,7 @@ async def get_weapon_info(name, level = None) -> dict:
     else:
         params = {'query': name}
     async with AsyncClient() as client:
-        req = await client.get(
-            url = MINIGG_WEAPON_URL,
-            params = params
-        )
+        req = await client.get(url=MINIGG_WEAPON_URL, params=params)
     data = json.loads(req.text)
     return data
 
@@ -61,15 +65,12 @@ async def get_misc_info(mode: str, name: str):
     """
     url = MINIGG_MISC_URL.format(mode)
     async with AsyncClient() as client:
-        req = await client.get(
-            url = url,
-            params = {'query': name}
-        )
+        req = await client.get(url=url, params={'query': name})
     data = json.loads(req.text)
     return data
 
 
-async def get_char_info(name , mode = 'char', level = None):
+async def get_char_info(name, mode='char', level=None):
     """
     :说明:
       返回角色信息。
@@ -91,7 +92,11 @@ async def get_char_info(name , mode = 'char', level = None):
     elif mode == 'costs':
         url = baseurl + name + '&costs=1'
         url2 = 'https://info.minigg.cn/talents?query=' + name + '&costs=1'
-        url3 = 'https://info.minigg.cn/talents?query=' + name + '&matchCategories=true'
+        url3 = (
+            'https://info.minigg.cn/talents?query='
+            + name
+            + '&matchCategories=true'
+        )
     elif level:
         url = baseurl + name + '&stats=' + level
     else:
@@ -99,21 +104,20 @@ async def get_char_info(name , mode = 'char', level = None):
 
     if url2:
         async with AsyncClient() as client:
-            req = await client.get(url = url2)
+            req = await client.get(url=url2)
             data2 = json.loads(req.text)
             if 'errcode' in data2:
                 async with AsyncClient() as client_:
-                    req = await client_.get(url = url3)
+                    req = await client_.get(url=url3)
                     data2 = json.loads(req.text)
 
     async with AsyncClient() as client:
-        req = await client.get(url = url)
+        req = await client.get(url=url)
         try:
             data = json.loads(req.text)
             if 'errcode' in data:
                 async with AsyncClient() as client_:
-                    req = await client_.get(
-                        url = url + '&matchCategories=true')
+                    req = await client_.get(url=url + '&matchCategories=true')
                     data = json.loads(req.text)
         except:
             data = None

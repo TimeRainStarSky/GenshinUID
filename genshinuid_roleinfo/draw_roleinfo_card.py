@@ -1,27 +1,27 @@
+import math
 import asyncio
 import datetime
-import math
 import threading
 from io import BytesIO
 from pathlib import Path
 from base64 import b64encode
-from aiohttp import ClientSession
-from typing import List, Optional, Tuple
+from typing import List, Tuple, Optional
 
 from httpx import get
 from nonebot import logger
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from aiohttp import ClientSession
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-from ..utils.mhy_api.get_mhy_data import get_character, get_calculate_info
 from ..utils.get_cookies.get_cookies import GetCookies
+from ..utils.genshin_fonts.genshin_fonts import genshin_font
 from ..utils.draw_image_tools.draw_image_tool import CustomizeImage
+from ..utils.mhy_api.get_mhy_data import get_character, get_calculate_info
 from ..utils.download_resource.download_resource import (
+    get_rel_pic,
     get_char_pic,
     get_weapon_pic,
-    get_rel_pic,
     get_char_img_pic,
 )
-from ..utils.genshin_fonts.genshin_fonts import genshin_font
 
 STATUS = []
 TEXT_PATH = Path(__file__).parent / 'texture2d'
@@ -64,7 +64,9 @@ async def _draw_char_pic(
     char_2.putalpha(alpha)
     char_1_mask = Image.open(TEXT_PATH / 'char_1_mask.png')
     STATUS.append(char_data['name'])
-    weapon_img_path = WEAPON_PATH / str(char_data['weapon']['icon'].split('/')[-1])
+    weapon_img_path = WEAPON_PATH / str(
+        char_data['weapon']['icon'].split('/')[-1]
+    )
     char_img_path = CHAR_PATH / (str(char_data['id']) + '.png')
     if not weapon_img_path.exists():
         get_weapon_pic(char_data['weapon']['icon'])
@@ -117,7 +119,11 @@ async def _draw_char_pic(
         anchor='mm',
     )
     draw_text.text(
-        (162, 38), '{}命'.format(char_mingzuo), text_color, genshin_font(18), anchor='rm'
+        (162, 38),
+        '{}命'.format(char_mingzuo),
+        text_color,
+        genshin_font(18),
+        anchor='rm',
     )
     draw_text.text(
         (115, 57),
@@ -135,7 +141,9 @@ async def _draw_char_pic(
     )
 
     if str(char_data['fetter']) == '10' or str(char_data['name']) == '旅行者':
-        draw_text.text((74, 19), '♥', text_color, genshin_font(14), anchor='mm')
+        draw_text.text(
+            (74, 19), '♥', text_color, genshin_font(14), anchor='mm'
+        )
     else:
         draw_text.text(
             (73, 18),
@@ -236,7 +244,9 @@ async def draw_pic(
     bg_img.paste(panle1_color, (0, 0), panle1)
     bg_img.paste(
         panle3,
-        (0, char_hang * 100 + 880) if char_num > 8 else (0, char_hang * 110 + 900),
+        (0, char_hang * 100 + 880)
+        if char_num > 8
+        else (0, char_hang * 110 + 900),
         panle3,
     )
     bg_img.paste(avatar_bg_color, (113, 98), avatar_bg)
@@ -267,7 +277,10 @@ async def draw_pic(
         genshin_font(26),
     )
     text_draw.text(
-        (640, 183.9), raw_data['stats']['spiral_abyss'], text_color, genshin_font(26)
+        (640, 183.9),
+        raw_data['stats']['spiral_abyss'],
+        text_color,
+        genshin_font(26),
     )
 
     # 奇馈宝箱
@@ -328,7 +341,9 @@ async def draw_pic(
 
     mondstadt = (
         liyue
-    ) = dragonspine = inazuma = offering = chasms_maw = under_chasms_maw = dict()
+    ) = (
+        dragonspine
+    ) = inazuma = offering = chasms_maw = under_chasms_maw = dict()
     for i in raw_data['world_explorations']:
         # 蒙德
         if i['id'] == 1:
@@ -384,7 +399,10 @@ async def draw_pic(
             genshin_font(22),
         )
         text_draw.text(
-            (235, 630), 'lv.' + str(mondstadt['level']), text_color, genshin_font(22)
+            (235, 630),
+            'lv.' + str(mondstadt['level']),
+            text_color,
+            genshin_font(22),
         )
     text_draw.text(
         (258, 660),
@@ -402,7 +420,10 @@ async def draw_pic(
             genshin_font(22),
         )
         text_draw.text(
-            (480, 627), 'lv.' + str(liyue['level']), text_color, genshin_font(22)
+            (480, 627),
+            'lv.' + str(liyue['level']),
+            text_color,
+            genshin_font(22),
         )
     text_draw.text(
         (503, 657),
@@ -420,7 +441,10 @@ async def draw_pic(
             genshin_font(22),
         )
         text_draw.text(
-            (238, 764), 'lv.' + str(dragonspine['level']), text_color, genshin_font(22)
+            (238, 764),
+            'lv.' + str(dragonspine['level']),
+            text_color,
+            genshin_font(22),
         )
 
     # 稻妻
@@ -432,7 +456,10 @@ async def draw_pic(
             genshin_font(22),
         )
         text_draw.text(
-            (750, 616), 'lv.' + str(inazuma['level']), text_color, genshin_font(22)
+            (750, 616),
+            'lv.' + str(inazuma['level']),
+            text_color,
+            genshin_font(22),
         )
         text_draw.text(
             (750, 644),
@@ -552,7 +579,9 @@ async def draw_pic(
             char_weapon_jinglian = i['weapon']['affix_level']
             char_weapon_icon = i['weapon']['icon']
 
-            weapon_img_path = WEAPON_PATH / str(char_weapon_icon.split('/')[-1])
+            weapon_img_path = WEAPON_PATH / str(
+                char_weapon_icon.split('/')[-1]
+            )
             char_img_path = CHAR_IMG_PATH / str(char_img_icon.split('/')[-1])
             char_path = CHAR_PATH / (str(i['id']) + '.png')
             if not weapon_img_path.exists():
@@ -584,7 +613,9 @@ async def draw_pic(
             charpic.paste(charpic_temp, (0, 0), charpic_temp)
 
             for _, k in enumerate(i['reliquaries']):
-                if not os.path.exists(REL_PATH / str(k['icon'].split('/')[-1])):
+                if not os.path.exists(
+                    REL_PATH / str(k['icon'].split('/')[-1])
+                ):
                     get_rel_pic(k['icon'])
                 rel = REL_PATH / str(k['icon'].split('/')[-1])
                 rel_img = Image.open(rel).resize((43, 43), Image.ANTIALIAS)

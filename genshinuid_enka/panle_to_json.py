@@ -1,9 +1,9 @@
-import asyncio
 import json
-import openpyxl
+import asyncio
 from pathlib import Path
 
 import httpx
+import openpyxl
 
 version = '2.7.0'
 version_old = '2.6.0'
@@ -12,30 +12,36 @@ R_PATH = Path(__file__).parents[0]
 DATA_PATH = R_PATH / 'data'
 ETC_PATH = R_PATH / 'etc'
 
+
 async def getEquipName(name: str) -> str:
-    r = json.loads(httpx.get('https://info.minigg.cn/artifacts?query={}'.format(name)).text)
+    r = json.loads(
+        httpx.get(
+            'https://info.minigg.cn/artifacts?query={}'.format(name)
+        ).text
+    )
     re = r['name']
     return re
 
+
 async def panle2Json() -> None:
     """
-        :说明:
-          访问DATA_PATH并转换数据为dmgMap.json。
+    :说明:
+      访问DATA_PATH并转换数据为dmgMap.json。
     """
-    wb=openpyxl.load_workbook(DATA_PATH / '参考面板2.7（上）.xlsx',data_only = True)
-    sheet=wb.active
+    wb = openpyxl.load_workbook(DATA_PATH / '参考面板2.7（上）.xlsx', data_only=True)
+    sheet = wb.active
 
     result = {}
     char_result = []
     char_temp = ''
-    for row in range(9,300):
+    for row in range(9, 300):
         temp = {}
         char_name = sheet.cell(row, 1).value
         if char_name and char_name != '角色':
             weapon = sheet.cell(row, 2).value
             equip_set = sheet.cell(row, 3).value
             if '4' in equip_set:
-                equip_set = equip_set.replace('4','')
+                equip_set = equip_set.replace('4', '')
                 equip_set = await getEquipName(equip_set)
             elif '2' in equip_set:
                 equip_set_list = equip_set[1:].split('2')
@@ -59,12 +65,11 @@ async def panle2Json() -> None:
                 key = '防御力'
             else:
                 key = '攻击力'
-            
+
             if char_name == '夜兰':
                 key = '血量'
             elif char_name == '五郎':
                 key = '防御力'
-            
 
             dmgBouns = sheet.cell(row, 15).value
             defArea = sheet.cell(row, 16).value
@@ -98,12 +103,12 @@ async def panle2Json() -> None:
                 val = float('{:.2f}'.format(float(sheet.cell(row, 20).value)))
             else:
                 val = 'any'
-            
+
             if char_name == '辛焱' and '盾' in action:
                 power = '2.88 + 1773'
 
-            #temp['name'] = char_name
-            weapon = weapon.replace('试做','试作')
+            # temp['name'] = char_name
+            weapon = weapon.replace('试做', '试作')
             temp['seq'] = '{}|{}|{}'.format(weapon, equip_set, equip_main)
             temp['action'] = action
             temp['crit_rate'] = crit_rate
@@ -132,7 +137,9 @@ async def panle2Json() -> None:
     with open(DATA_PATH / 'dmgMap.json', 'w', encoding='UTF-8') as file:
         json.dump(result, file, ensure_ascii=False)
 
+
 async def main():
     await panle2Json()
+
 
 asyncio.run(main())

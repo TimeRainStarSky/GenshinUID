@@ -7,6 +7,7 @@ get_charcard_list = on_command('毕业度统计', priority=priority)
 
 refresh_scheduler = require('nonebot_plugin_apscheduler').scheduler
 
+
 @refresh_scheduler.scheduled_job('cron', hour='4')
 async def daily_refresh_char_data():
     await refresh_char_data()
@@ -14,8 +15,8 @@ async def daily_refresh_char_data():
 
 async def refresh_char_data():
     """
-        :说明:
-          刷新全部绑定uid的角色展柜面板进入本地缓存。
+    :说明:
+      刷新全部绑定uid的角色展柜面板进入本地缓存。
     """
     conn = sqlite3.connect('ID_DATA.db')
     c = conn.cursor()
@@ -39,9 +40,11 @@ async def refresh_char_data():
 
 @refresh.handle()
 @handle_exception('强制刷新')
-async def send_card_info(matcher: Matcher,
-                         event: Union[GroupMessageEvent, PrivateMessageEvent],
-                         args: Message = CommandArg()):
+async def send_card_info(
+    matcher: Matcher,
+    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    args: Message = CommandArg(),
+):
     message = args.extract_plain_text().strip().replace(' ', '')
     uid = re.findall(r'\d+', message)  # str
     m = ''.join(re.findall('[\u4e00-\u9fa5]', message))
@@ -68,11 +71,13 @@ async def send_card_info(matcher: Matcher,
 
 @get_charcard_list.handle()
 @handle_exception('毕业度统计')
-async def send_charcard_list(bot: Bot,
-                             event: Union[GroupMessageEvent, PrivateMessageEvent],
-                             matcher: Matcher,
-                             args: Message = CommandArg(),
-                             custom: ImageAndAt = Depends()):
+async def send_charcard_list(
+    bot: Bot,
+    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    matcher: Matcher,
+    args: Message = CommandArg(),
+    custom: ImageAndAt = Depends(),
+):
 
     message = args.extract_plain_text().strip().replace(' ', '')
     limit = re.findall(r'\d+', message)  # str

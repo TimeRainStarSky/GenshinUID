@@ -29,6 +29,10 @@ PLAYER_ABYSS_INFO_URL = NEW_URL + '/game_record/app/genshin/api/spiralAbyss'
 # 获取详细角色信息
 PLAYER_DETAIL_INFO_URL = NEW_URL + '/game_record/app/genshin/api/character'
 # 天赋计算器API 获取天赋等级信息
-CALCULATE_INFO_URL = OLD_URL + '/event/e20200928calculate/v1/sync/avatar/detail'
+CALCULATE_INFO_URL = (
+    OLD_URL + '/event/e20200928calculate/v1/sync/avatar/detail'
+)
 # 获取米游社内的角色信息 mysid -> uid
-MIHOYO_BBS_PLAYER_INFO_URL = NEW_URL + '/game_record/card/wapi/getGameRecordCard'
+MIHOYO_BBS_PLAYER_INFO_URL = (
+    NEW_URL + '/game_record/card/wapi/getGameRecordCard'
+)

@@ -1,8 +1,11 @@
 import json
 from pathlib import Path
 
-with open(Path(__file__).parent / 'char_adv_list.json', "r", encoding='UTF-8') as f:
+with open(
+    Path(__file__).parent / 'char_adv_list.json', "r", encoding='UTF-8'
+) as f:
     adv_lst = json.load(f)
+
 
 async def weapon_adv(name):
     weapons = {}
@@ -15,7 +18,7 @@ async def weapon_adv(name):
             char_weapons.extend(i)
         for i in info['artifact']:
             char_artifacts.extend(i)
-        #char_artifacts = list(set(char_artifacts))
+        # char_artifacts = list(set(char_artifacts))
 
         for weapon_name in char_weapons:
             if name in weapon_name:  # fuzzy search

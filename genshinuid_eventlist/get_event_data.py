@@ -1,5 +1,7 @@
 import json
+
 from httpx import AsyncClient
+
 
 async def get_genshin_events(mode: str = 'List') -> dict:
     """
@@ -17,22 +19,24 @@ async def get_genshin_events(mode: str = 'List') -> dict:
         now_time = datetime.datetime.now().strftime('%Y-%m-%d')
         base_url = 'https://api-takumi.mihoyo.com/event/bbs_activity_calendar/getActList'
         params = {
-            'time'    : now_time,
+            'time': now_time,
             'game_biz': 'ys_cn',
-            'page'    : 1,
-            'tag_id'  : 0
+            'page': 1,
+            'tag_id': 0,
         }
     else:
-        base_url = 'https://hk4e-api.mihoyo.com/common/hk4e_cn/announcement/api/getAnn{}'.format(mode)
+        base_url = 'https://hk4e-api.mihoyo.com/common/hk4e_cn/announcement/api/getAnn{}'.format(
+            mode
+        )
         params = {
-            'game'     : 'hk4e',
-            'game_biz' : 'hk4e_cn',
-            'lang'     : 'zh-cn',
+            'game': 'hk4e',
+            'game_biz': 'hk4e_cn',
+            'lang': 'zh-cn',
             'bundle_id': 'hk4e_cn',
-            'platform' : 'pc',
-            'region'   : 'cn_gf01',
-            'level'    : 55,
-            'uid'      : 100000000
+            'platform': 'pc',
+            'region': 'cn_gf01',
+            'level': 55,
+            'uid': 100000000,
         }
 
     async with AsyncClient() as client:
@@ -40,8 +44,9 @@ async def get_genshin_events(mode: str = 'List') -> dict:
             url=base_url,
             headers={
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/95.0.4638.69 Safari/537.36'},
-            params=params
+                'Chrome/95.0.4638.69 Safari/537.36'
+            },
+            params=params,
         )
     data = json.loads(req.text)
     return data

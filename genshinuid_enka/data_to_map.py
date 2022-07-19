@@ -1,5 +1,5 @@
-import asyncio
 import json
+import asyncio
 from pathlib import Path
 
 import httpx
@@ -25,14 +25,18 @@ with open(DATA_PATH / 'textMap.json', "r", encoding='UTF-8') as f:
 
 
 async def avatarId2NameJson() -> None:
-    with open(DATA_PATH / 'AvatarExcelConfigData.json', "r", encoding='UTF-8') as f:
+    with open(
+        DATA_PATH / 'AvatarExcelConfigData.json', "r", encoding='UTF-8'
+    ) as f:
         avatar_data = json.load(f)
 
     temp = {}
     for i in avatar_data:
         temp[str(i['id'])] = raw_data[str(i['nameTextMapHash'])]
 
-    with open(MAP_PATH / avatarId2Name_fileName, 'w', encoding='UTF-8') as file:
+    with open(
+        MAP_PATH / avatarId2Name_fileName, 'w', encoding='UTF-8'
+    ) as file:
         json.dump(temp, file, ensure_ascii=False)
 
 
@@ -41,32 +45,52 @@ async def avatarName2ElementJson() -> None:
         avatarId2Name = json.load(f)
 
     temp = {}
-    elementMap = {'风': 'Anemo', '岩': 'Geo', '草': 'Dendro', '火': 'Pyro', '水': 'Hydro', '冰': 'Cryo', '雷': 'Electro'}
+    elementMap = {
+        '风': 'Anemo',
+        '岩': 'Geo',
+        '草': 'Dendro',
+        '火': 'Pyro',
+        '水': 'Hydro',
+        '冰': 'Cryo',
+        '雷': 'Electro',
+    }
     for i in list(avatarId2Name.values()):
-        data = json.loads(httpx.get('https://info.minigg.cn/characters?query={}'.format(i)).text)
+        data = json.loads(
+            httpx.get(
+                'https://info.minigg.cn/characters?query={}'.format(i)
+            ).text
+        )
         if 'errcode' in data:
             pass
         else:
             temp[i] = elementMap[data['element']]
 
-    with open(MAP_PATH / avatarName2Element_fileName, 'w', encoding='UTF-8') as file:
+    with open(
+        MAP_PATH / avatarName2Element_fileName, 'w', encoding='UTF-8'
+    ) as file:
         json.dump(temp, file, ensure_ascii=False)
 
 
 async def weaponHash2NameJson() -> None:
-    with open(DATA_PATH / 'WeaponExcelConfigData.json', "r", encoding='UTF-8') as f:
+    with open(
+        DATA_PATH / 'WeaponExcelConfigData.json', "r", encoding='UTF-8'
+    ) as f:
         weapon_data = json.load(f)
 
     temp = {}
     for i in weapon_data:
         temp[str(i['nameTextMapHash'])] = raw_data[str(i['nameTextMapHash'])]
 
-    with open(MAP_PATH / weaponHash2Name_fileName, 'w', encoding='UTF-8') as file:
+    with open(
+        MAP_PATH / weaponHash2Name_fileName, 'w', encoding='UTF-8'
+    ) as file:
         json.dump(temp, file, ensure_ascii=False)
 
 
 async def weaponHash2TypeJson() -> None:
-    with open(DATA_PATH / 'WeaponExcelConfigData.json', "r", encoding='UTF-8') as f:
+    with open(
+        DATA_PATH / 'WeaponExcelConfigData.json', "r", encoding='UTF-8'
+    ) as f:
         weapon_data = json.load(f)
 
     temp = {}
@@ -85,12 +109,16 @@ async def weaponHash2TypeJson() -> None:
             weaponType = ""
         temp[str(i['nameTextMapHash'])] = weaponType
 
-    with open(MAP_PATH / weaponHash2Type_fileName, 'w', encoding='UTF-8') as file:
+    with open(
+        MAP_PATH / weaponHash2Type_fileName, 'w', encoding='UTF-8'
+    ) as file:
         json.dump(temp, file, ensure_ascii=False)
 
 
 async def skillId2NameJson() -> None:
-    with open(DATA_PATH / 'AvatarSkillExcelConfigData.json', "r", encoding='UTF-8') as f:
+    with open(
+        DATA_PATH / 'AvatarSkillExcelConfigData.json', "r", encoding='UTF-8'
+    ) as f:
         skill_data = json.load(f)
 
     temp = {'Name': {}, 'Icon': {}}
@@ -103,7 +131,9 @@ async def skillId2NameJson() -> None:
 
 
 async def talentId2NameJson() -> None:
-    with open(DATA_PATH / 'AvatarTalentExcelConfigData.json', "r", encoding='UTF-8') as f:
+    with open(
+        DATA_PATH / 'AvatarTalentExcelConfigData.json', "r", encoding='UTF-8'
+    ) as f:
         talent_data = json.load(f)
 
     temp = {'Name': {}, 'Icon': {}}
@@ -111,14 +141,21 @@ async def talentId2NameJson() -> None:
         temp['Name'][str(i['talentId'])] = raw_data[str(i['nameTextMapHash'])]
         temp['Icon'][str(i['talentId'])] = i['icon']
 
-    with open(MAP_PATH / talentId2Name_fileName, 'w', encoding='UTF-8') as file:
+    with open(
+        MAP_PATH / talentId2Name_fileName, 'w', encoding='UTF-8'
+    ) as file:
         json.dump(temp, file, ensure_ascii=False)
 
+
 async def artifact2attrJson() -> None:
-    with open(DATA_PATH / 'ReliquaryExcelConfigData.json', "r", encoding='UTF-8') as f:
+    with open(
+        DATA_PATH / 'ReliquaryExcelConfigData.json', "r", encoding='UTF-8'
+    ) as f:
         reliquary_data = json.load(f)
-    
-    with open(DATA_PATH / 'DisplayItemExcelConfigData.json', "r", encoding='UTF-8') as f:
+
+    with open(
+        DATA_PATH / 'DisplayItemExcelConfigData.json', "r", encoding='UTF-8'
+    ) as f:
         Display_data = json.load(f)
 
     temp = {}
@@ -127,11 +164,13 @@ async def artifact2attrJson() -> None:
 
     with open(MAP_PATH / icon2Name_fileName, 'w', encoding='UTF-8') as file:
         json.dump(temp, file, ensure_ascii=False)
-    
+
     temp2 = {}
     for i in Display_data:
         if i['icon'].startswith('UI_RelicIcon'):
-            temp2[raw_data[str(i['nameTextMapHash'])]] = '_'.join(i['icon'].split('_')[:-1])
+            temp2[raw_data[str(i['nameTextMapHash'])]] = '_'.join(
+                i['icon'].split('_')[:-1]
+            )
 
     temp3 = {}
     for i in temp:
@@ -139,8 +178,11 @@ async def artifact2attrJson() -> None:
             if i.startswith(temp2[k]):
                 temp3[temp[i]] = k
 
-    with open(MAP_PATH / artifact2attr_fileName, 'w', encoding='UTF-8') as file:
+    with open(
+        MAP_PATH / artifact2attr_fileName, 'w', encoding='UTF-8'
+    ) as file:
         json.dump(temp3, file, ensure_ascii=False)
+
 
 async def main():
     await avatarId2NameJson()
@@ -150,5 +192,6 @@ async def main():
     await talentId2NameJson()
     await weaponHash2TypeJson()
     await artifact2attrJson()
+
 
 asyncio.run(main())

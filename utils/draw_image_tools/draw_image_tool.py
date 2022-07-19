@@ -1,9 +1,10 @@
 import math
 import random
-from httpx import get
 from pathlib import Path
-from typing import List, Optional, Tuple
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from typing import List, Tuple, Optional
+
+from httpx import get
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 BG_PATH = Path(__file__).parent / 'bg'
 
@@ -85,7 +86,9 @@ class CustomizeImage:
         return char_color
 
     @staticmethod
-    def get_char_high_color(bg_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+    def get_char_high_color(
+        bg_color: Tuple[int, int, int]
+    ) -> Tuple[int, int, int]:
         r = 140
         d = 20
         if max(*bg_color) > 255 - r:
@@ -98,7 +101,9 @@ class CustomizeImage:
         return char_color
 
     @staticmethod
-    def get_bg_detail_color(bg_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+    def get_bg_detail_color(
+        bg_color: Tuple[int, int, int]
+    ) -> Tuple[int, int, int]:
         r = 140
         if max(*bg_color) > 255 - r:
             r *= -1
@@ -110,7 +115,9 @@ class CustomizeImage:
         return bg_detail_color
 
     @staticmethod
-    def get_highlight_color(color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+    def get_highlight_color(
+        color: Tuple[int, int, int]
+    ) -> Tuple[int, int, int]:
         red_color = color[0]
         green_color = color[1]
         blue_color = color[2]

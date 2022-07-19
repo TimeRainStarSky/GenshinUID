@@ -1,23 +1,24 @@
-from nonebot import logger
 from functools import wraps
-from nonebot.exception import FinishedException, ActionFailed
+
+from nonebot import logger
+from nonebot.exception import ActionFailed, FinishedException
+
 
 def handle_exception(name: str, log_msg: str = None, fail_msg: str = None):
     """
-        :说明:
-          捕获命令执行过程中发生的异常并回报。
-        :参数:
-          * ``name: str``: 项目的名称。
-          * ``log_msg: str = None``: 自定义捕获异常后在日志中留存的信息。留空则使用默认信息。
-          * ``fail_msg: str = None``: 自定义捕获异常后向用户回报的信息，仅在提供自定义日志信息时有效。开头带@则艾特用户。留空则与日志信息相同。
+    :说明:
+      捕获命令执行过程中发生的异常并回报。
+    :参数:
+      * ``name: str``: 项目的名称。
+      * ``log_msg: str = None``: 自定义捕获异常后在日志中留存的信息。留空则使用默认信息。
+      * ``fail_msg: str = None``: 自定义捕获异常后向用户回报的信息，仅在提供自定义日志信息时有效。开头带@则艾特用户。留空则与日志信息相同。
     """
 
     def wrapper(func):
-
         @wraps(func)
-        async def inner(log_msg: str = log_msg,
-                        fail_msg: str = fail_msg,
-                        **kwargs):
+        async def inner(
+            log_msg: str = log_msg, fail_msg: str = fail_msg, **kwargs
+        ):
             matcher: Matcher = kwargs['matcher']
             try:
                 await func(**kwargs)
@@ -34,8 +35,9 @@ def handle_exception(name: str, log_msg: str = None, fail_msg: str = None):
                     if not fail_msg:
                         fail_msg = log_msg
                     if fail_msg[0] == '@':
-                        await matcher.send(f'{fail_msg[1:]}\n错误信息为{e}',
-                                           at_sender=True)
+                        await matcher.send(
+                            f'{fail_msg[1:]}\n错误信息为{e}', at_sender=True
+                        )
                     else:
                         await matcher.send(f'{fail_msg}\n错误信息为{e}')
                     if log_msg[0] == '@':

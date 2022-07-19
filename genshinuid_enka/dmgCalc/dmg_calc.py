@@ -1,6 +1,7 @@
-from pathlib import Path
-from typing import List, Optional, Tuple
 import json
+from pathlib import Path
+from typing import List, Tuple, Optional
+
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 
 DMG_PATH = Path(__file__).parents[0]
@@ -30,8 +31,12 @@ with open(DMG_PATH / 'char_skill_effect.json', "r", encoding='UTF-8') as f:
 dmgBar_1 = Image.open(DMG_TEXT_PATH / 'dmgBar_1.png')
 dmgBar_2 = Image.open(DMG_TEXT_PATH / 'dmgBar_2.png')
 
+
 def genshin_font_origin(size: int) -> ImageFont:
-    return ImageFont.truetype(str(DMG_TEXT_PATH / 'yuanshen_origin.ttf'), size=size)
+    return ImageFont.truetype(
+        str(DMG_TEXT_PATH / 'yuanshen_origin.ttf'), size=size
+    )
+
 
 async def draw_dmgCacl_img(raw_data: dict) -> Image:
     char_name = raw_data['avatarName']
@@ -70,17 +75,27 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
     prop['critrate'] = fight_prop['critRate']
     prop['critdmg'] = fight_prop['critDmg']
     prop['ce'] = fight_prop['energyRecharge']
-    prop['physicalDmgBonus'] = physicalDmgBonus = fight_prop['physicalDmgBonus']
+    prop['physicalDmgBonus'] = physicalDmgBonus = fight_prop[
+        'physicalDmgBonus'
+    ]
     prop['dmgBonus'] = dmgBonus = fight_prop['dmgBonus']
     prop['healBouns'] = fight_prop['healBonus']
     prop['shieldBouns'] = 0
-        
+
     if char_name not in char_action:
         faild_img = Image.new('RGBA', (950, 1))
         return faild_img, 0
     power_list = char_action[char_name]
 
-    for prop_attr in ['dmgBonus', 'critrate', 'critdmg', 'addDmg', 'd', 'r', 'ignoreDef']:
+    for prop_attr in [
+        'dmgBonus',
+        'critrate',
+        'critdmg',
+        'addDmg',
+        'd',
+        'r',
+        'ignoreDef',
+    ]:
         for prop_limit in ['A', 'B', 'C', 'E', 'Q']:
             prop['{}_{}'.format(prop_limit, prop_attr)] = 0
 
@@ -115,7 +130,7 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
         for i in raw_data['equipList']:
             artifact_set_list.append(i['aritifactSetsName'])
         equipSetList = set(artifact_set_list)
-        equipSets = {'type':'','set':''}
+        equipSets = {'type': '', 'set': ''}
         for equip in equipSetList:
             if artifact_set_list.count(equip) >= 4:
                 equipSets['type'] = '4'
@@ -162,31 +177,38 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
             all_effect.append(char_talent_effect_map[char_name][talent])
         else:
             break
-    
+
     # 计算角色buff
     for skill in char_skill_effect_map[char_name]:
         if int(skill) <= char_level:
             all_effect.append(char_skill_effect_map[char_name][skill])
         else:
             break
-    
+
     power_effect = ''
     if 'effect' in power_list:
         for skill_effect_single in power_list['effect']:
             skill_effect_name = skill_effect_single['name']
             skill_effect_value = skill_effect_single['value']
             skill_effect = skill_effect_single['effect']
-            skill_effect_level = prop['{}_skill_level'.format(skill_effect_name)]
+            skill_effect_level = prop[
+                '{}_skill_level'.format(skill_effect_name)
+            ]
             skill_effect_value_detail = skill_effect_value[skill_effect_level]
             if skill_effect[-1] == '}':
-                skill_effect_value_detail = skill_effect_value_detail.replace('%', '')
+                skill_effect_value_detail = skill_effect_value_detail.replace(
+                    '%', ''
+                )
             add_limit = skill_effect.split(':')
             if len(add_limit) == 1:
                 for i in power_list:
                     if i == 'effect':
                         pass
                     else:
-                        power_list[i]['power_name'] = '开{}后 '.format(skill_effect_name) + power_list[i]['power_name']
+                        power_list[i]['power_name'] = (
+                            '开{}后 '.format(skill_effect_name)
+                            + power_list[i]['power_name']
+                        )
             else:
                 for i in power_list:
                     if i == 'effect':
@@ -198,10 +220,13 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
                         elif '冲击伤害' in i:
                             add_type = 'C'
                         if add_type in add_limit[0]:
-                            power_list[i]['power_name'] = '开{}后 '.format(skill_effect_name) + power_list[i]['power_name']
+                            power_list[i]['power_name'] = (
+                                '开{}后 '.format(skill_effect_name)
+                                + power_list[i]['power_name']
+                            )
             power_effect = skill_effect.format(skill_effect_value_detail)
             all_effect.append(power_effect)
-        del(power_list['effect'])
+        del power_list['effect']
 
     sp = []
     # 计算全部的buff，添加入属性
@@ -225,42 +250,68 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
             base_check = True
             if '%' in effect_value:
                 effect_value_base_on_attr = effect_value.split('%')[-1]
-                effect_value_base_on_value = '%'.join(effect_value.split('%')[:-1])
+                effect_value_base_on_value = '%'.join(
+                    effect_value.split('%')[:-1]
+                )
                 if '%' in effect_value_base_on_value:
-                    effect_value_base_on_max_value = effect_value_base_on_value.split('%')[0]
-                    effect_value_base_on_value = effect_value_base_on_value.split('%')[-1]
-                    effect_now_value = float(effect_value_base_on_value) * prop[effect_value_base_on_attr]
-                    effect_value = float(effect_value_base_on_max_value) if \
-                                   effect_now_value >= float(effect_value_base_on_max_value) else effect_now_value
+                    effect_value_base_on_max_value = (
+                        effect_value_base_on_value.split('%')[0]
+                    )
+                    effect_value_base_on_value = (
+                        effect_value_base_on_value.split('%')[-1]
+                    )
+                    effect_now_value = (
+                        float(effect_value_base_on_value)
+                        * prop[effect_value_base_on_attr]
+                    )
+                    effect_value = (
+                        float(effect_value_base_on_max_value)
+                        if effect_now_value
+                        >= float(effect_value_base_on_max_value)
+                        else effect_now_value
+                    )
                 else:
-                    effect_value = float(effect_value_base_on_value) * prop[effect_value_base_on_attr]
+                    effect_value = (
+                        float(effect_value_base_on_value)
+                        * prop[effect_value_base_on_attr]
+                    )
                 base_check = False
 
             if effect_attr != 'em':
                 effect_value = float(effect_value) / 100
                 if effect_attr in ['hp', 'attack', 'defense'] and base_check:
-                    effect_value += effect_value * prop['base{}'.format(effect_attr)]
+                    effect_value += (
+                        effect_value * prop['base{}'.format(effect_attr)]
+                    )
             else:
                 effect_value = float(effect_value)
 
             if effect_limit:
                 if '\u4e00' <= effect_limit[0] <= '\u9fff':
-                    sp.append({'effect_name': effect_limit, 'effect_attr': effect_attr, 'effect_value': effect_value})
+                    sp.append(
+                        {
+                            'effect_name': effect_limit,
+                            'effect_attr': effect_attr,
+                            'effect_value': effect_value,
+                        }
+                    )
                 else:
                     for limit in effect_limit:
-                        prop['{}_{}'.format(limit, effect_attr)] += effect_value
+                        prop[
+                            '{}_{}'.format(limit, effect_attr)
+                        ] += effect_value
             else:
                 prop['{}'.format(effect_attr)] += effect_value
 
     w = 950
-    h = 40 * (len(power_list) + 1) 
+    h = 40 * (len(power_list) + 1)
     result_img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     for i in range(0, len(power_list) + 1):
         if i % 2 == 0:
             result_img.paste(dmgBar_1, (0, i * 40))
         else:
             result_img.paste(dmgBar_2, (0, i * 40))
-    
+
     result_draw = ImageDraw.Draw(result_img)
 
     text_color = (255, 255, 255)
@@ -269,7 +320,7 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
     result_draw.text((45, 22), '角色动作', title_color, text_size, anchor='lm')
     result_draw.text((460, 22), '暴击伤害', title_color, text_size, anchor='lm')
     result_draw.text((695, 22), '期望伤害', title_color, text_size, anchor='lm')
-    
+
     for index, power_name in enumerate(power_list):
         attack_type = power_name[0]
         if '重击' in power_name or '瞄准射击' in power_name:
@@ -291,54 +342,102 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
                         sp_addDmg += sp_single['effect_value']
 
         if '攻击' in power_list[power_name]['type']:
-            effect_prop  = prop['attack']
+            effect_prop = prop['attack']
         elif '生命值' in power_list[power_name]['type']:
             effect_prop = prop['hp']
         elif '防御' in power_list[power_name]['type']:
             effect_prop = prop['defense']
-        power = power_list[power_name]['value'][prop['{}_skill_level'.format(power_name[0])]]
+        power = power_list[power_name]['value'][
+            prop['{}_skill_level'.format(power_name[0])]
+        ]
         power_plus = power_list[power_name]['plus']
 
         power_percent, power_value = await power_to_value(power, power_plus)
-        
+
         dmgBonus_cal = prop['{}_dmgBonus'.format(attack_type)] + sp_dmgBonus
         critdmg_cal = prop['critdmg'] + prop['{}_critdmg'.format(attack_type)]
-        critrate_cal = prop['critrate'] + prop['{}_critrate'.format(attack_type)]
-        d_cal = (char_level + 100) / ((char_level + 100) + (1-prop['{}_d'.format(attack_type)]) * (1-prop['{}_ignoreDef'.format(attack_type)]) * (enemy_level + 100))
+        critrate_cal = (
+            prop['critrate'] + prop['{}_critrate'.format(attack_type)]
+        )
+        d_cal = (char_level + 100) / (
+            (char_level + 100)
+            + (1 - prop['{}_d'.format(attack_type)])
+            * (1 - prop['{}_ignoreDef'.format(attack_type)])
+            * (enemy_level + 100)
+        )
         r = 1 - prop['r']
-        e_dmg = prop['k']*(1+(2.78*prop['em'])/(prop['em']+1400)+prop['a'])
+        e_dmg = prop['k'] * (
+            1 + (2.78 * prop['em']) / (prop['em'] + 1400) + prop['a']
+        )
         add_dmg = prop['{}_addDmg'.format(attack_type)] + sp_addDmg
 
         if '治疗' in power_name:
-            crit_dmg = avg_dmg = (effect_prop * power_percent + power_value) * (1 + prop['healBouns'])
+            crit_dmg = avg_dmg = (
+                effect_prop * power_percent + power_value
+            ) * (1 + prop['healBouns'])
         elif '护盾' in power_name:
-            crit_dmg = avg_dmg = (effect_prop * power_percent + power_value) * (1 + prop['shieldBouns'])
+            crit_dmg = avg_dmg = (
+                effect_prop * power_percent + power_value
+            ) * (1 + prop['shieldBouns'])
         elif '提升' in power_name or '提高' in power_name:
             continue
         else:
-            crit_dmg = (effect_prop * power_percent + power_value) * (1 + critdmg_cal) * (1 + dmgBonus_cal) * d_cal * r + add_dmg
-            avg_dmg = (crit_dmg - add_dmg) * critrate_cal + (1 - critrate_cal) * (effect_prop * power_percent + power_value) * (1 + dmgBonus_cal) * d_cal * r + add_dmg
+            crit_dmg = (effect_prop * power_percent + power_value) * (
+                1 + critdmg_cal
+            ) * (1 + dmgBonus_cal) * d_cal * r + add_dmg
+            avg_dmg = (
+                (crit_dmg - add_dmg) * critrate_cal
+                + (1 - critrate_cal)
+                * (effect_prop * power_percent + power_value)
+                * (1 + dmgBonus_cal)
+                * d_cal
+                * r
+                + add_dmg
+            )
 
-        result_draw.text((45, 22 + (index + 1) * 40), power_list[power_name]['power_name'], text_color, text_size, anchor='lm')
-        result_draw.text((460, 22 + (index + 1) * 40), str(round(crit_dmg)), text_color, text_size, anchor='lm')
-        result_draw.text((695, 22 + (index + 1) * 40), str(round(avg_dmg)), text_color, text_size, anchor='lm')
-        
+        result_draw.text(
+            (45, 22 + (index + 1) * 40),
+            power_list[power_name]['power_name'],
+            text_color,
+            text_size,
+            anchor='lm',
+        )
+        result_draw.text(
+            (460, 22 + (index + 1) * 40),
+            str(round(crit_dmg)),
+            text_color,
+            text_size,
+            anchor='lm',
+        )
+        result_draw.text(
+            (695, 22 + (index + 1) * 40),
+            str(round(avg_dmg)),
+            text_color,
+            text_size,
+            anchor='lm',
+        )
+
     return result_img, len(power_list) + 2
+
 
 async def power_to_value(power: str, power_plus: int) -> List:
     """
     将power转换为value
     """
     if '+' in power:
-        power_percent = (float(power.split('+')[0].replace('%', '')) / 100) * power_plus
+        power_percent = (
+            float(power.split('+')[0].replace('%', '')) / 100
+        ) * power_plus
         power_value = power.split('+')[1]
         if '%' in power_value:
-            power_percent += float(power_value.replace('%', '')) / 100 * power_plus
+            power_percent += (
+                float(power_value.replace('%', '')) / 100 * power_plus
+            )
             power_value = 0
         else:
             power_value = float(power_value)
     else:
         power_percent = float(power.replace('%', '')) / 100 * power_plus
         power_value = 0
-    
+
     return power_percent, power_value

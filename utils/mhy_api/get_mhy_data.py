@@ -1,15 +1,17 @@
-import json
 import copy
+import json
+
 from nonebot import logger
 from httpx import AsyncClient
 from aiohttp import ClientSession
+
 from .mhy_api import *
-from .mhy_api_tools import (
-    random_hex,
+from .mhy_api_tools import (  # noqa: F401,F403
     md5,
+    random_hex,
     get_ds_token,
     old_version_get_ds_token,
-)  # noqa: F401,F403
+)
 
 mhyVersion = '2.11.1'
 
@@ -60,7 +62,11 @@ async def get_stoken_by_login_ticket(loginticket: str, mys_id: str) -> dict:
         url=GET_STOKEN_URL,
         method='get',
         header=_HEADER,
-        params={'login_ticket': loginticket, 'token_types': '3', 'uid': mys_id},
+        params={
+            'login_ticket': loginticket,
+            'token_types': '3',
+            'uid': mys_id,
+        },
     )
     return data
 
@@ -180,7 +186,12 @@ async def get_spiral_abyss_info(
     HEADER = copy.deepcopy(_HEADER)
     HEADER['Cookie'] = ck
     HEADER['DS'] = get_ds_token(
-        'role_id=' + uid + '&schedule_type=' + schedule_type + '&server=' + server_id
+        'role_id='
+        + uid
+        + '&schedule_type='
+        + schedule_type
+        + '&server='
+        + server_id
     )
     data = await _mhy_request(
         url=PLAYER_ABYSS_INFO_URL,
@@ -201,13 +212,18 @@ async def get_character(uid, character_ids, ck, server_id='cn_gf01') -> dict:
     HEADER = copy.deepcopy(_HEADER)
     HEADER['Cookie'] = ck
     HEADER['DS'] = get_ds_token(
-        '', {'character_ids': character_ids, 'role_id': uid, 'server': server_id}
+        '',
+        {'character_ids': character_ids, 'role_id': uid, 'server': server_id},
     )
     data = await _mhy_request(
         url=PLAYER_DETAIL_INFO_URL,
         method='post',
         header=HEADER,
-        data={'character_ids': character_ids, 'role_id': uid, 'server': server_id},
+        data={
+            'character_ids': character_ids,
+            'role_id': uid,
+            'server': server_id,
+        },
     )
     return data
 

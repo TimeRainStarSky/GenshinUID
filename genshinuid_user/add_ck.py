@@ -1,18 +1,24 @@
 import re
+
 from ..utils.db_operation.db_cache_and_check import refresh_ck
+from ..utils.mhy_api.get_mhy_data import (
+    get_mihoyo_bbs_info,
+    get_stoken_by_login_ticket,
+)
 from ..utils.db_operation.db_operation import (
-    cookies_db,
-    stoken_db,
     select_db,
+    stoken_db,
+    cookies_db,
     owner_cookies,
 )
-from ..utils.mhy_api.get_mhy_data import get_mihoyo_bbs_info, get_stoken_by_login_ticket
 
 
 async def add_ck(mes, qid):
     if 'stoken' in mes:
         login_ticket = (
-            re.search(r'login_ticket=([0-9a-zA-Z]+)', mes).group(0).split('=')[1]
+            re.search(r'login_ticket=([0-9a-zA-Z]+)', mes)
+            .group(0)
+            .split('=')[1]
         )
         uid = await select_db(qid, 'uid')
         ck = await owner_cookies(uid[0])

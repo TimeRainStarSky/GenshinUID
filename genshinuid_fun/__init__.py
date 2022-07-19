@@ -2,11 +2,12 @@ import get_lots_data
 
 get_lots = on_command('御神签', priority=priority)
 
+
 @get_lots.handle()
 @handle_exception('御神签')
-async def send_lots(event: MessageEvent,
-                    matcher: Matcher,
-                    args: Message = CommandArg()):
+async def send_lots(
+    event: MessageEvent, matcher: Matcher, args: Message = CommandArg()
+):
     if args:
         await matcher.finish()
         return

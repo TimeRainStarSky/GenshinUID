@@ -19,16 +19,24 @@ async def check_db():
             for i in mys_data['data']['list']:
                 if i['game_id'] != 2:
                     mys_data['data']['list'].remove(i)
-            return_str = return_str + f'uid{row[0]}/mys{mihoyo_id}的Cookies是正常的！\n'
+            return_str = (
+                return_str + f'uid{row[0]}/mys{mihoyo_id}的Cookies是正常的！\n'
+            )
             normal_num += 1
             logger.info(f'uid{row[0]}/mys{mihoyo_id}的Cookies是正常的！')
         except:
-            invalid_str = invalid_str + f'uid{row[0]}的Cookies是异常的！已删除该条Cookies！\n'
-            return_str = return_str + f'uid{row[0]}的Cookies是异常的！已删除该条Cookies！\n'
+            invalid_str = (
+                invalid_str + f'uid{row[0]}的Cookies是异常的！已删除该条Cookies！\n'
+            )
+            return_str = (
+                return_str + f'uid{row[0]}的Cookies是异常的！已删除该条Cookies！\n'
+            )
             invalid_list.append([row[2], row[0]])
             c.execute('DELETE from NewCookiesTable where UID=?', (row[0],))
             try:
-                c.execute('DELETE from CookiesCache where Cookies=?', (row[1],))
+                c.execute(
+                    'DELETE from CookiesCache where Cookies=?', (row[1],)
+                )
             except:
                 pass
             logger.info(f'uid{row[0]}的Cookies是异常的！已删除该条Cookies！')
@@ -49,14 +57,18 @@ async def refresh_ck(uid, mysid):
     conn = gsuid_pool.connect()
     c = conn.cursor()
     try:
-        c.execute('DELETE from CookiesCache where uid=? or mysid = ?', (uid, mysid))
+        c.execute(
+            'DELETE from CookiesCache where uid=? or mysid = ?', (uid, mysid)
+        )
     except:
         pass
 
 
 async def check_stoken_db():
     def random_text(num: int) -> str:
-        return ''.join(random.sample(string.ascii_lowercase + string.digits, num))
+        return ''.join(
+            random.sample(string.ascii_lowercase + string.digits, num)
+        )
 
     return_str = str()
     normal_num = 0
@@ -89,11 +101,14 @@ async def check_stoken_db():
             )
         data = req.json()
         if 'err' in data['message'] or data['retcode'] == -100:
-            invalid_str = invalid_str + f'uid{row[0]}的Stoken是异常的！已删除该条Stoken！\n'
+            invalid_str = (
+                invalid_str + f'uid{row[0]}的Stoken是异常的！已删除该条Stoken！\n'
+            )
             return_str = return_str + f'uid{row[0]}的Stoken是异常的！已删除该条Stoken！\n'
             invalid_list.append([row[2], row[0]])
             c.execute(
-                'UPDATE NewCookiesTable SET Stoken = ? WHERE UID=?', (None, row[0])
+                'UPDATE NewCookiesTable SET Stoken = ? WHERE UID=?',
+                (None, row[0]),
             )
             logger.info(f'uid{row[0]}的Stoken是异常的！已删除该条Stoken！')
         else:
@@ -102,7 +117,8 @@ async def check_stoken_db():
             normal_num += 1
     if len(c_data) > 9:
         return_str = '正常Stoken数量：{}\n{}'.format(
-            str(normal_num), '失效Stoken:\n' + invalid_str if invalid_str else '无失效Stoken'
+            str(normal_num),
+            '失效Stoken:\n' + invalid_str if invalid_str else '无失效Stoken',
         )
     conn.commit()
     conn.close()
@@ -131,7 +147,8 @@ async def delete_cache():
         c = conn.cursor()
         c.execute('DROP TABLE CookiesCache')
         c.execute(
-            'UPDATE NewCookiesTable SET Extra = ? WHERE Extra=?', (None, 'limit30')
+            'UPDATE NewCookiesTable SET Extra = ? WHERE Extra=?',
+            (None, 'limit30'),
         )
         c.execute(
             """CREATE TABLE IF NOT EXISTS CookiesCache

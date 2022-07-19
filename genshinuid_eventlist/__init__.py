@@ -1,12 +1,14 @@
-from ..all_import import * # noqa: F401, F403
-from .draw_event_img import draw_event_img, IMG_PATH
+from ..all_import import *  # noqa: F401, F403
+from .draw_event_img import IMG_PATH, draw_event_img
 
 get_event = on_command('活动列表', priority=priority)
 scheduler = require('nonebot_plugin_apscheduler').scheduler
 
+
 @scheduler.scheduled_job('cron', hour='2')
 async def draw_event():
     await draw_event_img()
+
 
 @get_event.handle()
 @handle_exception('活动')

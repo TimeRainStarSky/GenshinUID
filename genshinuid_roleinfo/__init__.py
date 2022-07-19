@@ -1,6 +1,6 @@
+from .draw_roleinfo_card import draw_pic
 from ..all_import import *  # noqa: F403,F401
 from ..utils.db_operation.db_operation import select_db
-from .draw_roleinfo_card import draw_pic
 
 get_uid_info = on_regex('^(uid|查询)?([0-9]{9})?$', priority=priority)
 get_mys_info = on_regex('^(mys)?([0-9]+)?$', priority=priority)

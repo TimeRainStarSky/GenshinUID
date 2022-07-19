@@ -72,7 +72,10 @@ async def cookies_db(uid, cookies, qid):
             (cookies, uid, 'off', 'off', 'off', 140, qid),
         )
     else:
-        c.execute('UPDATE NewCookiesTable SET Cookies = ? WHERE UID=?', (cookies, uid))
+        c.execute(
+            'UPDATE NewCookiesTable SET Cookies = ? WHERE UID=?',
+            (cookies, uid),
+        )
 
     conn.commit()
     conn.close()
@@ -82,10 +85,14 @@ def error_db(ck, err):
     conn = gsuid_pool.connect()
     c = conn.cursor()
     if err == 'error':
-        c.execute('UPDATE NewCookiesTable SET Extra = ? WHERE Cookies=?', ('error', ck))
+        c.execute(
+            'UPDATE NewCookiesTable SET Extra = ? WHERE Cookies=?',
+            ('error', ck),
+        )
     elif err == 'limit30':
         c.execute(
-            'UPDATE NewCookiesTable SET Extra = ? WHERE Cookies=?', ('limit30', ck)
+            'UPDATE NewCookiesTable SET Extra = ? WHERE Cookies=?',
+            ('limit30', ck),
         )
     conn.commit()
     conn.close()
@@ -116,7 +123,8 @@ async def stoken_db(s_cookies, uid):
     if 'Stoken' not in columns:
         c.execute('ALTER TABLE NewCookiesTable ADD COLUMN Stoken TEXT')
     c.execute(
-        'UPDATE NewCookiesTable SET Stoken = ? WHERE UID=?', (s_cookies, int(uid))
+        'UPDATE NewCookiesTable SET Stoken = ? WHERE UID=?',
+        (s_cookies, int(uid)),
     )
     conn.commit()
     conn.close()
@@ -169,23 +177,32 @@ def cache_db(uid, mode=1, mys=None):
 
     if mode == 1:
         if mys:
-            cursor = c.execute('SELECT *  FROM CookiesCache WHERE MYSID = ?', (mys,))
+            cursor = c.execute(
+                'SELECT *  FROM CookiesCache WHERE MYSID = ?', (mys,)
+            )
         else:
-            cursor = c.execute('SELECT *  FROM CookiesCache WHERE UID = ?', (uid,))
+            cursor = c.execute(
+                'SELECT *  FROM CookiesCache WHERE UID = ?', (uid,)
+            )
     else:
-        cursor = c.execute('SELECT *  FROM CookiesCache WHERE MYSID = ?', (uid,))
+        cursor = c.execute(
+            'SELECT *  FROM CookiesCache WHERE MYSID = ?', (uid,)
+        )
     c_data = cursor.fetchall()
 
     if len(c_data) == 0:
         if mode == 2:
             conn.create_function('REGEXP', 2, regex_func)
             cursor = c.execute(
-                'SELECT *  FROM NewCookiesTable WHERE REGEXP(Cookies, ?)', (uid,)
+                'SELECT *  FROM NewCookiesTable WHERE REGEXP(Cookies, ?)',
+                (uid,),
             )
             d_data = cursor.fetchall()
 
         else:
-            cursor = c.execute('SELECT *  FROM NewCookiesTable WHERE UID = ?', (uid,))
+            cursor = c.execute(
+                'SELECT *  FROM NewCookiesTable WHERE UID = ?', (uid,)
+            )
             d_data = cursor.fetchall()
 
         if len(d_data) != 0:
@@ -249,9 +266,13 @@ def cache_db(uid, mode=1, mys=None):
         use = c_data[0][2]
         if mys:
             try:
-                c.execute('UPDATE CookiesCache SET UID = ? WHERE MYSID=?', (uid, mys))
+                c.execute(
+                    'UPDATE CookiesCache SET UID = ? WHERE MYSID=?', (uid, mys)
+                )
             except:
-                c.execute('UPDATE CookiesCache SET MYSID = ? WHERE UID=?', (mys, uid))
+                c.execute(
+                    'UPDATE CookiesCache SET MYSID = ? WHERE UID=?', (mys, uid)
+                )
 
     conn.commit()
     conn.close()

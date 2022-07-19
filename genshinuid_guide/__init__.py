@@ -1,22 +1,26 @@
-import httpx
 from pathlib import Path
-from typing import Any, Union, List, Tuple
-from nonebot import on_command, on_regex, logger
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
-from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, RegexGroup
+from typing import Any, List, Tuple, Union
 
-from ..utils.exception.handle_exception import handle_exception
+import httpx
+from nonebot.matcher import Matcher
+from nonebot import logger, on_regex, on_command
+from nonebot.params import CommandArg, RegexGroup
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
+
 from ..utils.alias.alias_to_char_name import alias_to_char_name
+from ..utils.exception.handle_exception import handle_exception
 
 get_guide_pic = on_regex('([\u4e00-\u9fa5]+)(推荐|攻略)')
 get_bluekun_pic = on_command('参考面板')
 
 IMG_PATH = Path(__file__).parent / 'img'
 
+
 @get_guide_pic.handle()
 @handle_exception('建议')
-async def send_guide_pic(matcher: Matcher, args: Tuple[Any, ...] = RegexGroup()):
+async def send_guide_pic(
+    matcher: Matcher, args: Tuple[Any, ...] = RegexGroup()
+):
     name = await alias_to_char_name(str(args[0]))
     url = 'https://img.genshin.minigg.cn/guide/{}.jpg'.format(name)
     if httpx.head(url).status_code == 200:
