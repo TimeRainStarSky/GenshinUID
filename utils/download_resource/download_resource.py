@@ -1,7 +1,6 @@
-from pathlib import Path
-
 from httpx import get
 
+from .RESOURCE_PATH import *  # noqa: E501
 from ..alias.alias_to_char_name import alias_to_char_name
 from ..alias.avatarId_and_name_covert import name_to_avatar_id
 from ..minigg_api.get_minigg_data import (
@@ -10,15 +9,6 @@ from ..minigg_api.get_minigg_data import (
     get_audio_info,
     get_weapon_info,
 )
-
-RESOURCE_PATH = Path(__file__).parents[2] / 'resource'
-WEAPON_PATH = RESOURCE_PATH / 'weapon'
-CHAR_PATH = RESOURCE_PATH / 'chars'
-CHAR_STAND_PATH = RESOURCE_PATH / 'char_stand'
-CHAR_SIDE_PATH = RESOURCE_PATH / 'char_side'
-CHAR_NAMECARD_PATH = RESOURCE_PATH / 'char_namecard'
-REL_PATH = RESOURCE_PATH / 'reliquaries'
-TEXT_PATH = RESOURCE_PATH / 'texture2d'
 
 
 async def get_char_pic(name: str):
