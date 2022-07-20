@@ -7,7 +7,7 @@ from pathlib import Path
 from httpx import AsyncClient
 
 from .get_wiki_template import *  # noqa
-from .get_minigg_data import (
+from ..utils.minigg_api.get_minigg_data import (
     get_char_info,
     get_misc_info,
     get_audio_info,
