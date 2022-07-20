@@ -17,7 +17,7 @@ TEXT_PATH = R_PATH / 'texture2D'
 ICON_PATH = R_PATH / 'icon'
 GACHA_PATH = R_PATH / 'gachaImg'
 PLAYER_PATH = R_PATH / 'player'
-RELIC_PATH = R_PATH / 'relicIcon'
+RELIC_PATH = Path(__file__).parents[1] / 'resource' / 'reliquaries'
 MAP_PATH = R_PATH / 'map'
 ETC_PATH = R_PATH / 'etc'
 
@@ -725,7 +725,7 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
     for aritifact in raw_data['equipList']:
         artifacts_img = Image.open(TEXT_PATH / 'char_info_artifacts.png')
         artifacts_piece_img = Image.open(
-            RELIC_PATH / '{}.png'.format(aritifact['icon'])
+            RELIC_PATH / '{}.png'.format(aritifact['aritifactName'])
         )
         artifacts_piece_new_img = artifacts_piece_img.resize(
             (75, 75), Image.Resampling.LANCZOS

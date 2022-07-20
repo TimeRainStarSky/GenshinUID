@@ -4,6 +4,8 @@ from typing import List, Tuple, Optional
 
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 
+from ...utils.genshin_fonts.genshin_fonts import genshin_font_origin
+
 DMG_PATH = Path(__file__).parents[0]
 DMG_TEXT_PATH = DMG_PATH / 'texture2d'
 
@@ -30,12 +32,6 @@ with open(DMG_PATH / 'char_skill_effect.json', "r", encoding='UTF-8') as f:
 
 dmgBar_1 = Image.open(DMG_TEXT_PATH / 'dmgBar_1.png')
 dmgBar_2 = Image.open(DMG_TEXT_PATH / 'dmgBar_2.png')
-
-
-def genshin_font_origin(size: int) -> ImageFont:
-    return ImageFont.truetype(
-        str(DMG_TEXT_PATH / 'yuanshen_origin.ttf'), size=size
-    )
 
 
 async def draw_dmgCacl_img(raw_data: dict) -> Image:
@@ -96,6 +92,8 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
         'r',
         'ignoreDef',
     ]:
+        if prop_attr in ['addDmg', 'd', 'r', 'ignoreDef']:
+            prop['{}'.format(prop_attr)] = 0
         for prop_limit in ['A', 'B', 'C', 'E', 'Q']:
             prop['{}_{}'.format(prop_limit, prop_attr)] = 0
 
