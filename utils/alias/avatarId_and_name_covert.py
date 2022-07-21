@@ -29,6 +29,7 @@ async def name_to_avatar_id(name: str) -> str:
     :返回:
       * avatar_id (str): 角色ID。
     """
+    avatar_id = ''
     for i in char_id_data:
         if char_id_data[i] == name:
             avatar_id = i
