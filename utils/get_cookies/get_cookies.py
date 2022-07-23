@@ -12,24 +12,24 @@ class GetCookies:
     def __init__(self) -> None:
         self.useable_cookies: Optional[str] = None
         self.uid: Optional[str] = None
-        self.mode: Optional[int] = None
+        self.mode: Optional[str] = None
         self.raw_abyss_data: Optional[dict] = None
         self.raw_data: Optional[dict] = None
         self.nickname: Optional[int] = None
         self.schedule_type: Optional[str] = None
 
     async def get_useable_cookies(
-        self, uid: str, mode: int = 2, schedule_type: str = '1'
+        self, uid: str, mode: str = 'uid', schedule_type: str = '1'
     ):
         self.uid = uid
         self.schedule_type = schedule_type
         while True:
-            self.useable_cookies = cache_db(uid, mode - 1)
+            self.useable_cookies = cache_db(uid, mode)
             if self.useable_cookies == '':
                 return '绑定记录不存在。'
             elif self.useable_cookies == '没有可以使用的Cookies！':
                 return '没有可以使用的Cookies！'
-            if mode == 3:
+            if mode == 'mys':
                 await self.get_mihoyo_bbs_data()
             else:
                 await self.get_uid_data()

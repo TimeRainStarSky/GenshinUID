@@ -165,7 +165,7 @@ async def config_check(func, mode='CHECK'):
         return True
 
 
-def cache_db(uid, mode=1, mys=None):
+def cache_db(uid, mode: str = 'uid', mys=None):
     conn = gsuid_pool.connect()
     c = conn.cursor()
     c.execute(
@@ -175,7 +175,7 @@ def cache_db(uid, mode=1, mys=None):
         Cookies       TEXT);"""
     )
 
-    if mode == 1:
+    if mode == 'uid':
         if mys:
             cursor = c.execute(
                 'SELECT *  FROM CookiesCache WHERE MYSID = ?', (mys,)
@@ -191,7 +191,7 @@ def cache_db(uid, mode=1, mys=None):
     c_data = cursor.fetchall()
 
     if len(c_data) == 0:
-        if mode == 2:
+        if mode == 'mys':
             conn.create_function('REGEXP', 2, regex_func)
             cursor = c.execute(
                 'SELECT *  FROM NewCookiesTable WHERE REGEXP(Cookies, ?)',
@@ -208,13 +208,13 @@ def cache_db(uid, mode=1, mys=None):
         if len(d_data) != 0:
             if d_data[0][7] != 'error':
                 use = d_data[0][1]
-                if mode == 1:
+                if mode == 'uid':
                     c.execute(
                         'INSERT OR IGNORE INTO CookiesCache (Cookies,UID) \
                             VALUES (?, ?)',
                         (use, uid),
                     )
-                elif mode == 2:
+                elif mode == 'mys':
                     c.execute(
                         'INSERT OR IGNORE INTO CookiesCache (Cookies,MYSID) \
                             VALUES (?, ?)',
@@ -226,13 +226,13 @@ def cache_db(uid, mode=1, mys=None):
                 )
                 e_data = cookies_row.fetchall()
                 if len(e_data) != 0:
-                    if mode == 1:
+                    if mode == 'uid':
                         c.execute(
                             'INSERT OR IGNORE INTO CookiesCache (Cookies,UID) \
                                 VALUES (?, ?)',
                             (e_data[0][1], uid),
                         )
-                    elif mode == 2:
+                    elif mode == 'mys':
                         c.execute(
                             'INSERT OR IGNORE INTO CookiesCache (Cookies,MYSID) \
                                 VALUES (?, ?)',
@@ -247,13 +247,13 @@ def cache_db(uid, mode=1, mys=None):
             )
             e_data = cookies_row.fetchall()
             if len(e_data) != 0:
-                if mode == 1:
+                if mode == 'uid':
                     c.execute(
                         'INSERT OR IGNORE INTO CookiesCache (Cookies,UID) \
                             VALUES (?, ?)',
                         (e_data[0][1], uid),
                     )
-                elif mode == 2:
+                elif mode == 'mys':
                     c.execute(
                         'INSERT OR IGNORE INTO CookiesCache (Cookies,MYSID) \
                             VALUES (?, ?)',

@@ -7,7 +7,7 @@ from nonebot import logger
 from bs4 import BeautifulSoup
 from aiohttp.client import ClientSession
 
-MAX_TASKS = 5
+MAX_TASKS = 4
 from .RESOURCE_PATH import *  # noqa: E501
 from ..alias.avatarId_and_name_covert import name_to_avatar_id
 
@@ -67,6 +67,17 @@ async def get_char_url_list():
 
 
 async def download_by_fandom(char_list: dict):
+    # 判断需要下载哪些圣遗物图片
+    fandom_download_list = {}
+    if len(list(CHAR_NAMECARD_PATH.iterdir())) < len(char_list):
+        logger.info(f'本次需要下载图片')
+        await get_namecard_and_gacha_pic(char_list)
+    else:
+        logger.info('无需下载名片和抽卡图片!')
+    return ''
+
+
+async def get_namecard_and_gacha_pic(char_list: dict):
     tasks = []
     sem = asyncio.Semaphore(MAX_TASKS)
     async with ClientSession() as sess:
@@ -108,7 +119,7 @@ async def download_by_fandom(char_list: dict):
                         f'{chinese_name}.png',
                         CHAR_NAMECARD_PATH,
                     ),
-                    timeout=20,
+                    timeout=30,
                 )
             )
             logger.info(f'添加{chinese_name}的抽卡图片资源下载任务...')
@@ -121,7 +132,7 @@ async def download_by_fandom(char_list: dict):
                         f'{chinese_name}.png',
                         GACHA_IMG_PATH,
                     ),
-                    timeout=20,
+                    timeout=30,
                 )
             )
             """
@@ -151,7 +162,7 @@ async def download_by_fandom(char_list: dict):
                         f'{avatar_id}.png',
                         CHAR_SIDE_PATH,
                     ),
-                    timeout=20,
+                    timeout=30,
                 )
             )
             logger.info(f'添加{chinese_name}的Icon下载任务...')
@@ -164,7 +175,7 @@ async def download_by_fandom(char_list: dict):
                         f'{avatar_id}.png',
                         CHAR_PATH,
                     ),
-                    timeout=20,
+                    timeout=30,
                 )
             )
             """

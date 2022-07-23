@@ -4,6 +4,9 @@ from .download_from_fandom import get_char_url_list, download_by_fandom
 
 async def download_all_resource():
     lst = await get_char_url_list()
-    await download_by_fandom(lst)
-    await download_by_minigg()
+    faild_str = ''
+    faild_str += await download_by_fandom(lst)
+    faild_str += await download_by_minigg()
+    if faild_str:
+        return faild_str
     return '全部资源下载完成!'

@@ -40,9 +40,56 @@ async def _download(
 
 
 async def download_by_minigg():
-    await get_char_pic(CHAR_ALL_LIST)
-    await get_weapon_pic(WEAPON_ALL_LIST)
-    await get_rel_pic(REL_ALL_LIST)
+    # 判断需要下载哪些角色图片
+    char_download_list = []
+    return_str = ''
+    for char in CHAR_ALL_LIST:
+        char_id = await name_to_avatar_id(char)
+        char_path = CHAR_PATH / f'{char_id}.png'
+        char_side_path = CHAR_SIDE_PATH / f'{char_id}.png'
+        char_stand_path = CHAR_STAND_PATH / f'{char_id}.png'
+        if not char_path.exists() or not char_side_path.exists():
+            char_download_list.append(char)
+    if char_download_list:
+        logger.info(f'本次需要下载{",".join(char_download_list)}的图片')
+        char_faild = await get_char_pic(char_download_list)
+        if char_faild:
+            return_str += f'下载{",".join(char_faild)}的图片失败'
+            logger.info(f'下载{",".join(char_faild)}的图片失败')
+    else:
+        logger.info('无需下载角色图片!')
+
+    # 判断需要下载哪些武器图片
+    weapon_download_list = []
+    for weapon in WEAPON_ALL_LIST:
+        weapon_path = WEAPON_PATH / f'{weapon}.png'
+        if not weapon_path.exists():
+            weapon_download_list.append(weapon)
+    if weapon_download_list:
+        logger.info(f'本次需要下载{",".join(weapon_download_list)}的图片')
+        weapon_faild = await get_weapon_pic(weapon_download_list)
+        if weapon_faild:
+            return_str += f'下载{",".join(char_faild)}的图片失败'
+            logger.info(f'下载{",".join(char_faild)}的图片失败')
+    else:
+        logger.info('无需下载武器图片!')
+
+    # 判断需要下载哪些圣遗物图片
+    rel_download_list = []
+    for rel in REL_ALL_LIST:
+        rel_path = REL_PATH / f'{rel}.png'
+        if not rel_path.exists():
+            rel_download_list.append(rel)
+    if rel_download_list:
+        logger.info(f'本次需要下载{",".join(rel_download_list)}的图片')
+        rel_faild = await get_rel_pic(rel_download_list)
+        if rel_faild:
+            return_str += f'下载{",".join(rel_faild)}的图片失败'
+            logger.info(f'下载{",".join(rel_faild)}的图片失败')
+    else:
+        logger.info('无需下载圣遗物图片!')
+
+    return return_str
 
 
 async def get_char_pic(name_list: List):
@@ -58,59 +105,79 @@ async def get_char_pic(name_list: List):
       * name_list (str): 角色名称列表。
     """
     tasks = []
+    faild = []
     sem = asyncio.Semaphore(MAX_TASKS)
     async with ClientSession() as sess:
         for name in name_list:
             logger.info(f'正在下载角色{name}的图片')
             name = await alias_to_char_name(name)
             avatar_id = await name_to_avatar_id(name)
+
+            char_path = CHAR_PATH / f'{avatar_id}.png'
+            char_side_path = CHAR_SIDE_PATH / f'{avatar_id}.png'
+            char_stand_path = CHAR_STAND_PATH / f'{avatar_id}.png'
+
             raw_data = await get_char_info(name)
-            icon_url = raw_data['images']['icon']
             if name in ['空', '荧']:
                 pass
             else:
-                stand_url = raw_data['images']['cover1']
+                if not char_stand_path.exists():
+                    stand_url = raw_data['images']['cover1']
+                    tasks.append(
+                        asyncio.wait_for(
+                            _download(
+                                stand_url,
+                                sess,
+                                sem,
+                                f'{avatar_id}.png',
+                                CHAR_STAND_PATH,
+                            ),
+                            timeout=35,
+                        )
+                    )
+            if not char_side_path.exists():
+                side_url = raw_data['images']['sideicon']
                 tasks.append(
                     asyncio.wait_for(
                         _download(
-                            stand_url,
+                            side_url,
                             sess,
                             sem,
                             f'{avatar_id}.png',
-                            CHAR_STAND_PATH,
+                            CHAR_SIDE_PATH,
                         ),
-                        timeout=20,
+                        timeout=30,
                     )
                 )
-            side_url = raw_data['images']['sideicon']
-            tasks.append(
-                asyncio.wait_for(
-                    _download(
-                        side_url,
-                        sess,
-                        sem,
-                        f'{avatar_id}.png',
-                        CHAR_SIDE_PATH,
-                    ),
-                    timeout=20,
+            if not char_path.exists():
+                icon_url = raw_data['images']['icon']
+                tasks.append(
+                    asyncio.wait_for(
+                        _download(
+                            icon_url,
+                            sess,
+                            sem,
+                            f'{avatar_id}.png',
+                            CHAR_PATH,
+                        ),
+                        timeout=30,
+                    )
                 )
-            )
-            tasks.append(
-                asyncio.wait_for(
-                    _download(
-                        icon_url,
-                        sess,
-                        sem,
-                        f'{avatar_id}.png',
-                        CHAR_PATH,
-                    ),
-                    timeout=20,
-                )
-            )
             if len(tasks) > MAX_TASKS:
-                await asyncio.gather(*tasks)
+                faild.extend(await _gather(tasks, faild, name))
                 tasks = []
+        faild.extend(await _gather(tasks, faild, '最后一个'))
+    return faild
+
+
+async def _gather(tasks: List, faild: List, name: str):
+    try:
         await asyncio.gather(*tasks)
+        await asyncio.sleep(1)
+    except asyncio.exceptions.TimeoutError:
+        logger.warning(f'{name}超时了!')
+        faild.append(name)
+    return faild
 
 
 async def get_weapon_pic(name_list: List):
@@ -123,6 +190,7 @@ async def get_weapon_pic(name_list: List):
       * name_list (str): 武器名称列表。
     """
     tasks = []
+    faild = []
     sem = asyncio.Semaphore(MAX_TASKS)
     async with ClientSession() as sess:
         for name in name_list:
@@ -138,13 +206,14 @@ async def get_weapon_pic(name_list: List):
                         f'{name}.png',
                         WEAPON_PATH,
                     ),
-                    timeout=20,
+                    timeout=30,
                 )
             )
             if len(tasks) > MAX_TASKS:
-                await asyncio.gather(*tasks)
+                faild.extend(await _gather(tasks, faild, name))
                 tasks = []
-        await asyncio.gather(*tasks)
+        faild.extend(await _gather(tasks, faild, '最后一个'))
+    return faild
 
 
 async def get_rel_pic(name_list: List):
@@ -157,27 +226,35 @@ async def get_rel_pic(name_list: List):
       * name_list (str): 武器套装名称列表。
     """
     tasks = []
+    faild = []
     sem = asyncio.Semaphore(MAX_TASKS)
     async with ClientSession() as sess:
         for name in name_list:
             logger.info(f'正在下载圣遗物{name}的图片')
             raw_data = await get_misc_info('artifacts', name)
-            for i in ['flower', 'plume', 'sands', 'goblet', 'circlet']:
+            if '之人' in name:
+                part_list = ['circlet']
+            else:
+                part_list = ['flower', 'plume', 'sands', 'goblet', 'circlet']
+            for i in part_list:
                 url = raw_data['images'][i]
                 p_name = raw_data[i]['name']
-                tasks.append(
-                    asyncio.wait_for(
-                        _download(
-                            icon_url,
-                            sess,
-                            sem,
-                            f'{p_name}.png',
-                            REL_PATH,
-                        ),
-                        timeout=20,
+                path = REL_PATH / f'{p_name}.png'
+                if not path.exists():
+                    tasks.append(
+                        asyncio.wait_for(
+                            _download(
+                                url,
+                                sess,
+                                sem,
+                                f'{p_name}.png',
+                                REL_PATH,
+                            ),
+                            timeout=30,
+                        )
                     )
-                )
             if len(tasks) > MAX_TASKS:
-                await asyncio.gather(*tasks)
+                faild.extend(await _gather(tasks, faild, name))
                 tasks = []
-        await asyncio.gather(*tasks)
+        faild.extend(await _gather(tasks, faild, '最后一个'))
+        return faild
