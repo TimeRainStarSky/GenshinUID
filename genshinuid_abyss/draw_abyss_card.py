@@ -56,7 +56,7 @@ async def draw_abyss_img(
 ) -> Image:
     # 获取Cookies
     data_def = GetCookies()
-    retcode = await data_def.get_useable_cookies(uid, mode, '1')
+    retcode = await data_def.get_useable_cookies(uid, mode, schedule_type)
     if not retcode:
         return retcode
     raw_data = data_def.raw_data
