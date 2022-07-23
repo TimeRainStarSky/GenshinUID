@@ -26,6 +26,9 @@ abyss_title_pic = Image.open(TEXT_PATH / 'abyss_title.png')
 char_mask = Image.open(TEXT_PATH / 'char_mask.png')
 char_frame = Image.open(TEXT_PATH / 'char_frame.png')
 
+text_title_color = (29, 29, 29)
+text_floor_color = (30, 31, 25)
+
 
 async def get_abyss_star_pic(star: int) -> Image:
     star_pic = Image.open(TEXT_PATH / f'star{star}.png')
@@ -39,15 +42,11 @@ async def get_rarity_pic(rarity: int) -> Image:
 
 async def get_rank_data(data: dict, path: Path):
     char_id = data[0]['avatar_id']
-    char_pic = Image.open(path / f'{char_id}.png')
+    char_pic = Image.open(path / f'{char_id}.png').convert('RGBA')
     if path == CHAR_STAND_PATH:
-        char_pic = char_pic.resize(
-            (862, 528), Image.Resampling.LANCZOS
-        ).convert('RGBA')
+        char_pic = char_pic.resize((862, 528), Image.Resampling.BICUBIC)
     elif path == CHAR_SIDE_PATH:
-        char_pic = char_pic.resize((60, 60), Image.Resampling.LANCZOS).convert(
-            'RGBA'
-        )
+        char_pic = char_pic.resize((60, 60), Image.Resampling.BICUBIC)
     rank_value = str(data[0]['value'])
     return char_pic, rank_value
 
@@ -94,8 +93,6 @@ async def draw_abyss_img(
     based_h = 415 if is_unfull else 415 + levels_num * 440
     image_def = CustomizeImage(None, based_w, based_h)
     bg_img = image_def.bg_img
-    text_title_color = (29, 29, 29)
-    text_floor_color = (27, 27, 27)
 
     white_overlay = Image.new('RGBA', (based_w, based_h), (255, 255, 255, 188))
     bg_img.paste(white_overlay, (0, 0), white_overlay)
@@ -124,7 +121,7 @@ async def draw_abyss_img(
     ) = await get_rank_data(energy_skill_rank, CHAR_SIDE_PATH)
 
     abyss_title.paste(dmg_pic, (13, -42), dmg_pic)
-    abyss_title.paste(abyss_title_pic, (0, 0), abyss_title_pic)
+    abyss_title = Image.alpha_composite(abyss_title, abyss_title_pic)
     abyss_title.paste(defeat_pic, (5, 171), defeat_pic)
     abyss_title.paste(take_damage_pic, (5, 171 + 54), take_damage_pic)
     abyss_title.paste(normal_skill_pic, (5, 171 + 54 * 2), normal_skill_pic)
@@ -233,14 +230,14 @@ async def draw_abyss_img(
                         (75, 170),
                         f'Lv.{char["level"]}',
                         font=genshin_font_32,
-                        fill=text_title_color,
+                        fill=text_floor_color,
                         anchor='mm',
                     )
                     char_card.draw.text(
                         (6, 113),
                         f'{talent_num}命',
                         font=genshin_font_27,
-                        fill=text_title_color,
+                        fill=text_floor_color,
                         anchor='lm',
                     )
                     floor_pic.paste(
