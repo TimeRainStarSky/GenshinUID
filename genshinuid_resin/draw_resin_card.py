@@ -1,0 +1,258 @@
+import math
+import time
+import datetime
+import threading
+from io import BytesIO
+from pathlib import Path
+from base64 import b64encode
+from typing import List, Tuple, Optional
+
+from httpx import get
+from nonebot import logger
+from aiohttp import ClientSession
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+
+from ..utils.get_cookies.get_cookies import GetCookies
+from ..utils.mhy_api.get_mhy_data import get_daily_data
+from ..utils.enka_api.get_enka_data import get_enka_info
+from ..utils.minigg_api.get_minigg_data import get_char_info
+from ..utils.alias.enName_to_avatarId import enName_to_avatarId
+from ..utils.draw_image_tools.draw_image_tool import CustomizeImage
+from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
+from ..utils.alias.avatarId_and_name_covert import name_to_avatar_id
+
+TEXT_PATH = Path(__file__).parent / 'texture2D'
+CHAR_SIDE_PATH = Path(__file__).parents[1] / 'resource' / 'char_side'
+
+resin_fg_pic = Image.open(TEXT_PATH / 'resin_fg.png')
+yes_pic = Image.open(TEXT_PATH / 'yes.png')
+no_pic = Image.open(TEXT_PATH / 'no.png')
+
+first_color = (29, 29, 29)
+second_color = (98, 98, 98)
+green_color = (15, 196, 35)
+orange_color = (237, 115, 61)
+red_color = (235, 61, 75)
+
+gs_font_20 = genshin_font_origin(20)
+gs_font_26 = genshin_font_origin(26)
+gs_font_32 = genshin_font_origin(32)
+gs_font_60 = genshin_font_origin(60)
+
+
+async def draw_resin_img(uid: str):
+    # 获取数据
+    daily_data = await get_daily_data(uid)
+    daily_data = daily_data['data']
+    player_data = await get_enka_info(uid)
+    # player_data = {}
+
+    # 处理数据
+    if player_data:
+        if 'signature' in player_data['playerInfo']:
+            signature = player_data['playerInfo']['signature']
+        else:
+            signature = '该旅行者还没有签名噢~'
+        world_level = player_data['playerInfo']['level']
+        world_level_str = f'探索等级{str(world_level)}'
+    else:
+        signature = '暂无获取数据'
+        world_level_str = f'暂无数据'
+
+    # 获取背景图片各项参数
+    based_w = 500
+    based_h = 900
+    image_def = CustomizeImage(None, based_w, based_h)
+    img = image_def.bg_img
+    white_overlay = Image.new('RGBA', (based_w, based_h), (228, 222, 210, 222))
+    img.paste(white_overlay, (0, 0), white_overlay)
+
+    img.paste(resin_fg_pic, (0, 0), resin_fg_pic)
+
+    # 树脂
+    resin = daily_data['current_resin']
+    max_resin = daily_data['max_resin']
+    resin_str = f'{resin}/{max_resin}'
+    resin_percent = resin / max_resin
+    if resin_percent <= 0.6:
+        resin_color = green_color
+    elif resin_percent > 0.6 and resin_percent <= 0.8:
+        resin_color = orange_color
+    elif resin_percent > 0.8:
+        resin_color = red_color
+
+    delay = 53
+    # 洞天宝钱
+    home_coin = daily_data['current_home_coin']
+    max_home_coin = daily_data['max_home_coin']
+    home_coin_str = f'{home_coin}/{max_home_coin}'
+    if max_home_coin - home_coin < 200:
+        home_coin_mark = '可收取'
+        home_coin_color = red_color
+        img.paste(no_pic, (35, 559), no_pic)
+    else:
+        home_coin_mark = '已收取'
+        home_coin_color = green_color
+        img.paste(yes_pic, (35, 559), yes_pic)
+    # 完成委托
+    finish_task = daily_data['finished_task_num']
+    total_task = daily_data['total_task_num']
+    is_task_reward = daily_data['is_extra_task_reward_received']
+    task_str = f'{finish_task}/{total_task}'
+    if is_task_reward:
+        task_mark = '已领取'
+        task_color = green_color
+        img.paste(yes_pic, (35, 559 + delay), yes_pic)
+    else:
+        task_mark = '未领取'
+        task_color = red_color
+        img.paste(no_pic, (35, 559 + delay), no_pic)
+    # 周本减半
+    weekly_half = daily_data['remain_resin_discount_num']
+    max_weekly_half = daily_data['resin_discount_num_limit']
+    weekly_half_str = f'{weekly_half}/{max_weekly_half}'
+    if weekly_half == 0:
+        weekly_half_mark = '已使用'
+        weekly_half_color = green_color
+        img.paste(yes_pic, (35, 559 + delay * 2), yes_pic)
+    else:
+        weekly_half_mark = '未用完'
+        weekly_half_color = red_color
+        img.paste(no_pic, (35, 559 + delay * 2), no_pic)
+    # 参量质变仪
+    is_transformer = daily_data['transformer']['obtained']
+    transformer = daily_data['transformer']['recovery_time']['reached']
+    transformer_day = daily_data['transformer']['recovery_time']['Day']
+    transformer_hour = daily_data['transformer']['recovery_time']['Hour']
+    transformer_str = f'还剩{transformer_day}天{transformer_hour}小时'
+    if transformer:
+        transformer_mark = '可使用'
+        transformer_color = red_color
+        img.paste(no_pic, (35, 559 + delay * 3), no_pic)
+    else:
+        transformer_mark = '已使用'
+        transformer_color = green_color
+        img.paste(yes_pic, (35, 559 + delay * 3), yes_pic)
+
+    img_draw = ImageDraw.Draw(img)
+
+    # 派遣
+    for index, char in enumerate(daily_data['expeditions']):
+        char_en_name = char['avatar_side_icon'].split('_')[-1].split('.')[0]
+        avatar_id = await enName_to_avatarId(char_en_name)
+        char_pic = (
+            Image.open(CHAR_SIDE_PATH / f'{avatar_id}.png')
+            .convert('RGBA')
+            .resize((80, 80), Image.Resampling.LANCZOS)
+        )
+        img.paste(char_pic, (22 + index * 90, 770), char_pic)
+        if char['status'] == 'Finished':
+            status_mark = '待收取'
+            status_color = red_color
+        else:
+            status_mark = '已派遣'
+            status_color = green_color
+        img_draw.text(
+            (65 + index * 90, 870),
+            status_mark,
+            font=gs_font_20,
+            fill=status_color,
+            anchor='mm',
+        )
+
+    # 绘制树脂圆环
+    ring_pic = Image.open(TEXT_PATH / 'ring.apng')
+    ring_pic.seek(round(resin_percent * 49))
+    img.paste(ring_pic, (0, 0), ring_pic)
+
+    # 写签名
+    img_draw.text(
+        (48, 137), signature, font=gs_font_26, fill=second_color, anchor='lm'
+    )
+    # 写UID
+    img_draw.text(
+        (250, 518), f'UID{uid}', font=gs_font_26, fill=first_color, anchor='mm'
+    )
+    # 写探索等级
+    img_draw.text(
+        (250, 281),
+        world_level_str,
+        font=gs_font_26,
+        fill=second_color,
+        anchor='mm',
+    )
+    # 写树脂
+    img_draw.text(
+        (250, 327),
+        resin_str,
+        font=gs_font_60,
+        fill=first_color,
+        anchor='mm',
+    )
+    # 写洞天宝钱
+    img_draw.text(
+        (335, 588),
+        home_coin_str,
+        font=gs_font_20,
+        fill=first_color,
+        anchor='lm',
+    )
+    img_draw.text(
+        (225, 584),
+        home_coin_mark,
+        font=gs_font_32,
+        fill=home_coin_color,
+        anchor='lm',
+    )
+    # 写完成委托
+    img_draw.text(
+        (335, 588 + delay),
+        task_str,
+        font=gs_font_20,
+        fill=first_color,
+        anchor='lm',
+    )
+    img_draw.text(
+        (225, 584 + delay),
+        task_mark,
+        font=gs_font_32,
+        fill=task_color,
+        anchor='lm',
+    )
+    # 写周本减半
+    img_draw.text(
+        (335, 588 + delay * 2),
+        weekly_half_str,
+        font=gs_font_20,
+        fill=first_color,
+        anchor='lm',
+    )
+    img_draw.text(
+        (225, 584 + delay * 2),
+        weekly_half_mark,
+        font=gs_font_32,
+        fill=weekly_half_color,
+        anchor='lm',
+    )
+    # 写参量质变仪
+    img_draw.text(
+        (335, 588 + delay * 3),
+        transformer_str,
+        font=gs_font_20,
+        fill=first_color,
+        anchor='lm',
+    )
+    img_draw.text(
+        (225, 584 + delay * 3),
+        transformer_mark,
+        font=gs_font_32,
+        fill=transformer_color,
+        anchor='lm',
+    )
+
+    img = img.convert('RGB')
+    result_buffer = BytesIO()
+    img.save(result_buffer, format='JPEG', subsampling=0, quality=90)
+    res = result_buffer.getvalue()
+
+    return res

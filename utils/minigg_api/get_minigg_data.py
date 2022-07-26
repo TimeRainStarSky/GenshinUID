@@ -5,6 +5,22 @@ from httpx import AsyncClient
 from .minigg_api import *  # noqa: F401, F403
 
 
+async def get_minigg_enka_info(uid: str):
+    """
+    :说明:
+      返回角色信息。
+    :参数:
+      * uid (str): 玩家uid。
+    :返回:
+      * dict: 角色信息。
+    """
+    url = MINIGG_ENKA_URL.format(uid)
+    async with AsyncClient() as client:
+        req = await client.get(url=url)
+    data = json.loads(req.text)
+    return data
+
+
 async def get_audio_info(name: str, audioid: str, language: str = 'cn') -> str:
     """
     :说明:
