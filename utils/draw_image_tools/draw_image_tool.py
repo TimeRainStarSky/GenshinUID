@@ -9,6 +9,31 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 BG_PATH = Path(__file__).parent / 'bg'
 
 
+async def get_simple_bg(
+    based_w: int, based_h: int, image: str = None
+) -> Image:
+    if image:
+        edit_bg = Image.open(BytesIO(get(image).content)).convert('RGBA')
+    else:
+        bg_path = random.choice(list(BG_PATH.iterdir()))
+        edit_bg = Image.open(bg_path).convert('RGBA')
+
+    # 确定图片的长宽
+    based_scale = '%.3f' % (based_w / based_h)
+
+    w, h = edit_bg.size
+    scale_f = '%.3f' % (w / h)
+    new_w = math.ceil(based_h * float(scale_f))
+    new_h = math.ceil(based_w / float(scale_f))
+    if scale_f > based_scale:
+        bg_img2 = edit_bg.resize((new_w, based_h), Image.ANTIALIAS)
+    else:
+        bg_img2 = edit_bg.resize((based_w, new_h), Image.ANTIALIAS)
+    bg_img = bg_img2.crop((0, 0, based_w, based_h))
+
+    return bg_img
+
+
 class CustomizeImage:
     def __init__(self, image: str, based_w: int, based_h: int) -> None:
 

@@ -2,9 +2,7 @@ import math
 import time
 import datetime
 import threading
-from io import BytesIO
 from pathlib import Path
-from base64 import b64encode
 from typing import List, Tuple, Optional
 
 from httpx import get
@@ -17,7 +15,8 @@ from ..utils.mhy_api.get_mhy_data import get_daily_data
 from ..utils.enka_api.get_enka_data import get_enka_info
 from ..utils.minigg_api.get_minigg_data import get_char_info
 from ..utils.alias.enName_to_avatarId import enName_to_avatarId
-from ..utils.draw_image_tools.draw_image_tool import CustomizeImage
+from ..utils.draw_image_tools.send_image_tool import convert_img
+from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
 from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
 from ..utils.alias.avatarId_and_name_covert import name_to_avatar_id
 
@@ -62,8 +61,7 @@ async def draw_resin_img(uid: str):
     # 获取背景图片各项参数
     based_w = 500
     based_h = 900
-    image_def = CustomizeImage(None, based_w, based_h)
-    img = image_def.bg_img
+    img = await get_simple_bg(based_w, based_h)
     white_overlay = Image.new('RGBA', (based_w, based_h), (228, 222, 210, 222))
     img.paste(white_overlay, (0, 0), white_overlay)
 
@@ -250,9 +248,5 @@ async def draw_resin_img(uid: str):
         anchor='lm',
     )
 
-    img = img.convert('RGB')
-    result_buffer = BytesIO()
-    img.save(result_buffer, format='JPEG', subsampling=0, quality=90)
-    res = result_buffer.getvalue()
-
+    res = await convert_img(img)
     return res
