@@ -30,6 +30,10 @@ char_frame = Image.open(TEXT_PATH / 'char_frame.png')
 text_title_color = (29, 29, 29)
 text_floor_color = (30, 31, 25)
 
+genshin_font_70 = genshin_font_origin(70)
+genshin_font_32 = genshin_font_origin(32)
+genshin_font_27 = genshin_font_origin(27)
+
 
 async def get_abyss_star_pic(star: int) -> Image:
     star_pic = Image.open(TEXT_PATH / f'star{star}.png')
@@ -126,10 +130,6 @@ async def draw_abyss_img(
     abyss_title.paste(take_damage_pic, (5, 171 + 54), take_damage_pic)
     abyss_title.paste(normal_skill_pic, (5, 171 + 54 * 2), normal_skill_pic)
     abyss_title.paste(energy_skill_pic, (5, 171 + 54 * 3), energy_skill_pic)
-
-    genshin_font_70 = genshin_font_origin(70)
-    genshin_font_32 = genshin_font_origin(32)
-    genshin_font_27 = genshin_font_origin(27)
 
     abyss_title_draw = ImageDraw.Draw(abyss_title)
     abyss_title_draw.text(

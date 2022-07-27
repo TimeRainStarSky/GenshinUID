@@ -36,3 +36,14 @@ CALCULATE_INFO_URL = (
 MIHOYO_BBS_PLAYER_INFO_URL = (
     NEW_URL + '/game_record/card/wapi/getGameRecordCard'
 )
+
+# 米游社的API列表
+bbs_Taskslist = BBS_URL + '/apihub/sapi/getUserMissionsState'  # 获取任务列表
+bbs_Signurl = BBS_URL + '/apihub/sapi/signIn?gids={}'  # post
+bbs_Listurl = (
+    BBS_URL + '/post/api/getForumPostList?'
+    'forum_id={}&is_good=false&is_hot=false&page_size=20&sort_type=1'
+)
+bbs_Detailurl = BBS_URL + '/post/api/getPostFull?post_id={}'
+bbs_Shareurl = BBS_URL + '/apihub/api/getShareConf?entity_id={}&entity_type=1'
+bbs_Likeurl = BBS_URL + '/apihub/sapi/upvotePost'  # post json

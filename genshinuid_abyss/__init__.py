@@ -1,10 +1,13 @@
 from .draw_abyss_card import draw_abyss_img
 from ..all_import import *  # noqa: F403,F401
 from ..utils.db_operation.db_operation import select_db
-from ..utils.message.get_image_and_at import ImageAndAt
-from ..utils.message.error_reply import *  # noqa: F403,F401
 
-get_abyss_info = on_regex('(uid|查询|mys)?([0-9]{9})?(上期)?(深渊)([0-9]{0,2})?')
+get_abyss_info = on_regex(
+    '^(\[CQ:at,qq=[0-9]+\] )?'
+    '(uid|查询|mys)?([0-9]{9})?(上期)?(深渊)'
+    '(9|10|11|12|九|十|十一|十二)?(层)?'
+    '(\[CQ:at,qq=[0-9]+\])?$'
+)
 
 
 @get_abyss_info.handle()
@@ -21,28 +24,38 @@ async def send_abyss_info(
     else:
         qid = event.user_id
 
-    if args[0] == 'mys':
+    if args[1] == 'mys':
         mode = 'mys'
     else:
         mode = 'uid'
 
     # 判断uid
-    if args[1] is None:
+    if args[2] is None:
         try:
             uid = await select_db(qid, mode='uid')
             uid = uid[0]
         except TypeError:
             await matcher.finish(UID_HINT)
     else:
-        uid = args[1]
+        uid = args[2]
 
     # 判断深渊期数
-    if args[2] is None:
+    if args[3] is None:
         schedule_type = '1'
     else:
         schedule_type = '2'
 
-    im = await draw_abyss_img(uid, args[4], mode, schedule_type)
+    if args[5] in ['九', '十', '十一', '十二']:
+        floor = (
+            args[5]
+            .replace('九', '9')
+            .replace('十一', '11')
+            .replace('十二', '12')
+            .replace('十', '10')
+        )
+    else:
+        floor = args[5]
+    im = await draw_abyss_img(uid, floor, mode, schedule_type)
     if isinstance(im, str):
         await matcher.finish(im)
     elif isinstance(im, bytes):
