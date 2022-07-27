@@ -14,7 +14,8 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 from ..utils.get_cookies.get_cookies import GetCookies
 from ..utils.mhy_api.get_mhy_data import get_character
-from ..utils.draw_image_tools.draw_image_tool import CustomizeImage
+from ..utils.draw_image_tools.send_image_tool import convert_img
+from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
 from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -91,8 +92,7 @@ async def draw_abyss_img(
     # 获取背景图片各项参数
     based_w = 625
     based_h = 415 if is_unfull else 415 + levels_num * 440
-    image_def = CustomizeImage(None, based_w, based_h)
-    bg_img = image_def.bg_img
+    bg_img = await get_simple_bg(based_w, based_h)
 
     white_overlay = Image.new('RGBA', (based_w, based_h), (255, 255, 255, 188))
     bg_img.paste(white_overlay, (0, 0), white_overlay)
@@ -257,8 +257,5 @@ async def draw_abyss_img(
             )
             bg_img.paste(floor_pic, (5, 415 + index_floor * 440), floor_pic)
 
-    bg_img = bg_img.convert('RGB')
-    result_buffer = BytesIO()
-    bg_img.save(result_buffer, format='JPEG', subsampling=0, quality=90)
-    res = result_buffer.getvalue()
+    res = await convert_img(bg_img)
     return res
