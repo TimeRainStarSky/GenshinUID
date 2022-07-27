@@ -17,6 +17,14 @@ text_color = (31, 32, 26)
 gs_font_23 = genshin_font_origin(23)
 gs_font_26 = genshin_font_origin(26)
 
+max_data = {
+    '成就': 649,
+    '华丽的宝箱': 139,
+    '珍贵的宝箱': 368,
+    '精致的宝箱': 1303,
+    '普通的宝箱': 1774,
+}
+
 
 async def dataToDataStr(max, my) -> str:
     return [
@@ -52,13 +60,6 @@ async def draw_collection_img(uid: str, mode: str = 'uid'):
     text_draw = ImageDraw.Draw(img)
 
     # 处理数据
-    max_data = {
-        '成就': 646,
-        '华丽的宝箱': 131,
-        '珍贵的宝箱': 347,
-        '精致的宝箱': 1221,
-        '普通的宝箱': 1658,
-    }
     achieve = raw_data['stats']['achievement_number']
     chest4 = raw_data['stats']['common_chest_number']
     chest3 = raw_data['stats']['exquisite_chest_number']
