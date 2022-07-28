@@ -5,7 +5,11 @@ import sqlite3
 from nonebot import logger
 
 from .get_mihoyo_bbs_coin import MihoyoBBSCoin
-from ..utils.db_operation.db_operation import select_db, get_stoken
+from ..utils.db_operation.db_operation import (
+    select_db,
+    get_stoken,
+    config_check,
+)
 
 
 async def daily_mihoyo_bbs_coin():

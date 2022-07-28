@@ -130,6 +130,28 @@ async def stoken_db(s_cookies, uid):
     conn.close()
 
 
+async def open_push(uid, qid, status, mode):
+    conn = gsuid_pool.connect()
+    c = conn.cursor()
+    cursor = c.execute('SELECT * from NewCookiesTable WHERE UID = ?', (uid,))
+    c_data = cursor.fetchall()
+    if len(c_data) != 0:
+        try:
+            c.execute(
+                'UPDATE NewCookiesTable SET {s} = ?,QID = ? WHERE UID=?'.format(
+                    s=mode
+                ),
+                (status, qid, uid),
+            )
+            conn.commit()
+            conn.close()
+            return True
+        except:
+            return False
+    else:
+        return False
+
+
 async def config_check(func, mode='CHECK'):
     conn = gsuid_pool.connect()
     c = conn.cursor()

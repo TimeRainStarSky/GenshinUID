@@ -39,4 +39,6 @@ from .utils.alias.alias_to_char_name import alias_to_char_name
 from .utils.exception.handle_exception import handle_exception
 from .utils.genshin_fonts.genshin_fonts import genshin_font_origin
 
+config = get_driver().config
+SUPERUSERS = {int(x) for x in config.superusers}
 priority = 2

@@ -31,8 +31,8 @@ async def bbs_recheck(args: Message = CommandArg()):
     await daily_mihoyo_bbs_coin()
 
 
-# 每日一点十分进行米游币获取
-@bbscoin_scheduler.scheduled_job('cron', hour='1', minute='10')
+# 每日一点十六分进行米游币获取
+@bbscoin_scheduler.scheduled_job('cron', hour='1', minute='16')
 async def sign_at_night():
     await daily_mihoyo_bbs_coin()
 
