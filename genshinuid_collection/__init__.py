@@ -4,7 +4,9 @@ from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.message.error_reply import *  # noqa: F403,F401
 
-get_collection_info = on_regex('(uid|查询|mys)?([0-9]{9})?(收集|宝箱)')
+get_collection_info = on_regex(
+    '^(\[CQ:at,qq=[0-9]+\] )?(uid|查询|mys)?([0-9]{9})?(收集|宝箱)(\[CQ:at,qq=[0-9]+\])?$'
+)
 
 
 @get_collection_info.handle()
@@ -21,20 +23,20 @@ async def send_collection_info(
     else:
         qid = event.user_id
 
-    if args[0] == 'mys':
+    if args[1] == 'mys':
         mode = 'mys'
     else:
         mode = 'uid'
 
     # 判断uid
-    if args[1] is None:
+    if args[2] is None:
         try:
             uid = await select_db(qid, mode='uid')
             uid = uid[0]
         except TypeError:
             await matcher.finish(UID_HINT)
     else:
-        uid = args[1]
+        uid = args[2]
 
     im = await draw_collection_img(uid)
     if isinstance(im, str):
