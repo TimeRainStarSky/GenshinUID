@@ -24,17 +24,19 @@ async def send_mihoyo_coin(
 
 
 @all_bbscoin_recheck.handle()
-async def bbs_recheck(args: Message = CommandArg()):
+@handle_exception('米游币全部重获取')
+async def bbs_recheck(matcher: Matcher, args: Message = CommandArg()):
     if args:
         return
-    await all_bbscoin_recheck.send('已开始执行')
-    await daily_mihoyo_bbs_coin()
+    await matcher.send('已开始执行!可能需要较久时间!')
+    await send_daily_mihoyo_bbs_sign()
+    await matcher.finish('执行完成!')
 
 
 # 每日一点十六分进行米游币获取
 @bbscoin_scheduler.scheduled_job('cron', hour='1', minute='16')
 async def sign_at_night():
-    await daily_mihoyo_bbs_coin()
+    await send_daily_mihoyo_bbs_sign()
 
 
 async def send_daily_mihoyo_bbs_sign():
@@ -46,7 +48,7 @@ async def send_daily_mihoyo_bbs_sign():
                 user_id=user_id, message=im_private[user_id]
             )
             await asyncio.sleep(5 + random.randint(1, 3))
-    for qid in superusers:
+    for qid in SUPERUSERS:
         await bot.call_api(api='send_private_msg', user_id=qid, message=im)
         await asyncio.sleep(5 + random.randint(1, 3))
     logger.info('米游币获取已结束。')
