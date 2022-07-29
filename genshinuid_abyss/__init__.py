@@ -4,7 +4,7 @@ from ..utils.db_operation.db_operation import select_db
 
 get_abyss_info = on_regex(
     '^(\[CQ:at,qq=[0-9]+\] )?'
-    '(uid|查询|mys)?([0-9]{9})?(上期)?(深渊)'
+    '(uid|查询|mys)?([0-9]{9})?(上期)?(深渊|sy)'
     '(9|10|11|12|九|十|十一|十二)?(层)?'
     '(\[CQ:at,qq=[0-9]+\])?$'
 )
