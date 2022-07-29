@@ -4,6 +4,8 @@ from httpx import AsyncClient
 
 from .enka_api import ENKA_DATA_URL
 
+HEADER = {'User-Agent': 'GenshinUID/3.0'}
+
 
 async def get_enka_info(uid: str):
     """
@@ -16,6 +18,6 @@ async def get_enka_info(uid: str):
     """
     url = ENKA_DATA_URL.format(uid)
     async with AsyncClient() as client:
-        req = await client.get(url=url)
+        req = await client.get(url=url, headers=HEADER)
     data = json.loads(req.text)
     return data
