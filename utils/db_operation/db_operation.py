@@ -187,6 +187,16 @@ async def config_check(func, mode='CHECK'):
         return True
 
 
+async def get_all_signin_list():
+    conn = gsuid_pool.connect()
+    c = conn.cursor()
+    cursor = c.execute(
+        'SELECT *  FROM NewCookiesTable WHERE StatusB != ?', ('off',)
+    )
+    c_data = cursor.fetchall()
+    return c_data
+
+
 def cache_db(uid, mode: str = 'uid', mys=None):
     conn = gsuid_pool.connect()
     c = conn.cursor()

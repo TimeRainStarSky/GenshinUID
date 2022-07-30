@@ -1,10 +1,13 @@
 from functools import wraps
 
-from nonebot import logger
+from nonebot.log import logger
+from nonebot.matcher import Matcher
 from nonebot.exception import ActionFailed, FinishedException
 
+from ..message.error_reply import *  # noqa: F403,F401
 
-def handle_exception(name: str, log_msg: str = None, fail_msg: str = None):
+
+def handle_exception(name: str, log_msg: str = None, fail_msg: str = None):  # type: ignore
     """
     :说明:
       捕获命令执行过程中发生的异常并回报。
@@ -24,11 +27,18 @@ def handle_exception(name: str, log_msg: str = None, fail_msg: str = None):
                 await func(**kwargs)
             except ActionFailed as e:
                 # 此为bot本身由于风控或网络问题发不出消息，并非代码本身出问题
-                await matcher.send(f'发送消息失败{e.info["wording"]}')
+                await matcher.send(f'发送消息失败{e.info["wording"]}')  # type: ignore
                 logger.exception(f'发送{name}消息失败')
             except FinishedException:
                 # `finish` 会抛出此异常，应予以抛出而不处理
                 raise
+            except TypeError:
+                await matcher.send(UID_HINT)
+                logger.exception(f'获取{name}信息错误')
+            except IndexError:
+                # 一般为没有找到绑定信息
+                await matcher.send(f'{CK_HINT}')
+                logger.exception(f'获取{name}信息错误')
             except Exception as e:
                 # 代码本身出问题
                 if log_msg:

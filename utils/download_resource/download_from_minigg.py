@@ -2,7 +2,7 @@ import asyncio
 from typing import Any, List, Tuple, Union
 
 import aiofiles
-from nonebot import logger
+from nonebot.log import logger
 from aiohttp.client import ClientSession
 
 from .RESOURCE_PATH import *  # noqa: E501

@@ -10,20 +10,14 @@ from typing import Any, List, Tuple, Union
 from time import strftime, strptime, localtime
 
 from httpx import AsyncClient
+from nonebot.log import logger
+from nonebot.adapters import Bot
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from nonebot.params import Depends, CommandArg, RegexGroup
 from nonebot.exception import ActionFailed, FinishedException
-from nonebot import (
-    Bot,
-    logger,
-    get_bot,
-    require,
-    on_regex,
-    get_driver,
-    on_command,
-)
+from nonebot import get_bot, require, on_regex, get_driver, on_command
 from nonebot.adapters.onebot.v11 import (
     PRIVATE_FRIEND,
     Message,
@@ -34,6 +28,7 @@ from nonebot.adapters.onebot.v11 import (
     PrivateMessageEvent,
 )
 
+from .utils.db_operation.db_operation import select_db
 from .utils.message.get_image_and_at import ImageAndAt
 from .utils.message.error_reply import *  # noqa: F403,F401
 from .utils.alias.alias_to_char_name import alias_to_char_name

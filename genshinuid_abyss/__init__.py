@@ -1,12 +1,11 @@
 from .draw_abyss_card import draw_abyss_img
 from ..all_import import *  # noqa: F403,F401
-from ..utils.db_operation.db_operation import select_db
 
 get_abyss_info = on_regex(
-    '^(\[CQ:at,qq=[0-9]+\] )?'
-    '(uid|查询|mys)?([0-9]{9})?(上期)?(深渊|sy)'
-    '(9|10|11|12|九|十|十一|十二)?(层)?'
-    '(\[CQ:at,qq=[0-9]+\])?$'
+    r'^(\[CQ:at,qq=[0-9]+\] )?'
+    r'(uid|查询|mys)?([0-9]{9})?(上期)?(深渊|sy)'
+    r'(9|10|11|12|九|十|十一|十二)?(层)?'
+    r'(\[CQ:at,qq=[0-9]+\])?$'
 )
 
 
@@ -18,6 +17,8 @@ async def send_abyss_info(
     args: Tuple[Any, ...] = RegexGroup(),
     custom: ImageAndAt = Depends(),
 ):
+    logger.info('开始执行[查询深渊信息]')
+    logger.info('[查询深渊信息]参数: {}'.format(args))
     at = custom.get_first_at()
     if at:
         qid = at
@@ -31,19 +32,18 @@ async def send_abyss_info(
 
     # 判断uid
     if args[2] is None:
-        try:
-            uid = await select_db(qid, mode='uid')
-            uid = uid[0]
-        except TypeError:
-            await matcher.finish(UID_HINT)
+        uid = await select_db(qid, mode='uid')
+        uid = uid[0]
     else:
         uid = args[2]
+    logger.info('[查询深渊信息]uid: {}'.format(uid))
 
     # 判断深渊期数
     if args[3] is None:
         schedule_type = '1'
     else:
         schedule_type = '2'
+    logger.info('[查询深渊信息]深渊期数: {}'.format(schedule_type))
 
     if args[5] in ['九', '十', '十一', '十二']:
         floor = (
@@ -55,6 +55,8 @@ async def send_abyss_info(
         )
     else:
         floor = args[5]
+    logger.info('[查询深渊信息]深渊层数: {}'.format(floor))
+
     im = await draw_abyss_img(uid, floor, mode, schedule_type)
     if isinstance(im, str):
         await matcher.finish(im)

@@ -15,17 +15,21 @@ async def send_uid_info(
     matcher: Matcher,
     custom: ImageAndAt = Depends(),
 ):
+    logger.info('开始执行[每日信息]')
+
     at = custom.get_first_at()
     if at:
         qid = at
     else:
         qid = event.user_id
+    logger.info('[每日信息]QQ号: {}'.format(qid))
 
     try:
         uid = await select_db(qid, mode='uid')
         uid = uid[0]
     except TypeError:
         await matcher.finish(UID_HINT)
+    logger.info('[每日信息]UID: {}'.format(uid))
 
     im = await draw_resin_img(uid)
     if isinstance(im, str):

@@ -1,14 +1,12 @@
 import copy
-import json
+from typing import Optional
 
-from nonebot import logger
-from httpx import AsyncClient
+from nonebot.log import logger
 from aiohttp import ClientSession
 
 from .mhy_api import *
 from ..db_operation.db_operation import owner_cookies
 from .mhy_api_tools import (  # noqa: F401,F403
-    md5,
     random_hex,
     get_ds_token,
     old_version_get_ds_token,
@@ -29,9 +27,10 @@ _HEADER = {
 async def _mhy_request(
     url: str,
     method: str = 'get',
-    header: str = _HEADER,
-    params: dict = None,
-    data: dict = None,
+    header: dict = _HEADER,
+    params: dict = {},
+    data: dict = {},
+    sess: Optional[ClientSession] = None,
 ) -> dict:
     """
     :说明:
@@ -42,20 +41,39 @@ async def _mhy_request(
       * header (str): 默认为_HEADER。
       * params (dict): 参数。
       * data (dict): 参数(`post`方法需要传)。
-      * client (ClientSession): 可选，指定client。
+      * client (ClientSession): 可选, 指定client。
     :返回:
       * result (dict): json.loads()解析字段。
     """
     try:
-        async with AsyncClient() as client:
+        if sess is None:
+            async with ClientSession() as sess:
+                if method == 'get':
+                    async with sess.get(
+                        url=url, headers=header, params=params
+                    ) as res:
+                        result = await res.json()
+                else:
+                    async with sess.post(
+                        url=url, headers=header, json=data
+                    ) as res:
+                        result = await res.json()
+            return result
+        else:
             if method == 'get':
-                req = await client.get(url, headers=header, params=params)
-            elif method == 'post':
-                req = await client.post(url, headers=header, json=data)
-        result = json.loads(req.text)
-        return result
+                async with sess.get(
+                    url=url, headers=header, params=params
+                ) as res:
+                    result = await res.json()
+            else:
+                async with sess.post(
+                    url=url, headers=header, json=data
+                ) as res:
+                    result = await res.json()
+            return result
     except:
         logger.exception('访问{}失败！'.format(url))
+        return {}
 
 
 async def get_stoken_by_login_ticket(loginticket: str, mys_id: str) -> dict:
@@ -133,7 +151,7 @@ async def mihoyo_bbs_sign(uid, server_id='cn_gf01') -> dict:
         url=SIGN_URL,
         method='post',
         header=HEADER,
-        json={'act_id': 'e202009291139501', 'uid': uid, 'region': server_id},
+        data={'act_id': 'e202009291139501', 'uid': uid, 'region': server_id},
     )
     return data
 
@@ -249,7 +267,20 @@ async def get_calculate_info(
     return data
 
 
-async def get_mihoyo_bbs_info(mysid, ck) -> dict:
+async def get_mihoyo_bbs_info(mysid: str, ck: str) -> dict:
+    """
+    :说明:
+      返回米游社账号对应的游戏角色信息。
+      包括原神, 崩坏3 等等。
+      mys_data['data']['list']是一个列表，
+      每个元素是一个字典, 对应每一个游戏
+      ```原神的'game_id' = 2```
+    :参数:
+      * mysid (str): 米游社通行证。
+      * ck (str): 米游社Cookie。
+    :返回:
+      * mys_data (dict): 米游社账号的游戏角色信息。
+    """
     HEADER = copy.deepcopy(_HEADER)
     HEADER['Cookie'] = ck
     HEADER['DS'] = get_ds_token('uid=' + mysid)
