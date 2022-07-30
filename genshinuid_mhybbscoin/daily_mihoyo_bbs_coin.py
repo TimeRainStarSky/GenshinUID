@@ -2,7 +2,7 @@ import random
 import asyncio
 import sqlite3
 
-from nonebot import logger
+from nonebot.log import logger
 
 from .get_mihoyo_bbs_coin import MihoyoBBSCoin
 from ..utils.db_operation.db_operation import (
@@ -12,7 +12,7 @@ from ..utils.db_operation.db_operation import (
 )
 
 
-async def daily_mihoyo_bbs_coin():
+async def all_daily_mihoyo_bbs_coin():
     conn = sqlite3.connect('ID_DATA.db')
     c = conn.cursor()
     cursor = c.execute(

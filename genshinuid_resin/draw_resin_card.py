@@ -125,7 +125,7 @@ async def draw_resin_img(uid: str):
         char_pic = (
             Image.open(CHAR_SIDE_PATH / f'{avatar_id}.png')
             .convert('RGBA')
-            .resize((80, 80), Image.Resampling.LANCZOS)
+            .resize((80, 80), Image.Resampling.LANCZOS)  # type: ignore
         )
         img.paste(char_pic, (22 + index * 90, 770), char_pic)
         if char['status'] == 'Finished':
