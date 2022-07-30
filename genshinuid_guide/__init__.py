@@ -1,12 +1,9 @@
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, Tuple
 
 import httpx
-from nonebot.matcher import Matcher
-from nonebot import logger, on_regex, on_command
-from nonebot.params import CommandArg, RegexGroup
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
+from ..all_import import *
 from ..utils.alias.alias_to_char_name import alias_to_char_name
 from ..utils.exception.handle_exception import handle_exception
 
@@ -24,8 +21,8 @@ async def send_guide_pic(
     name = await alias_to_char_name(str(args[0]))
     url = 'https://img.genshin.minigg.cn/guide/{}.jpg'.format(name)
     if httpx.head(url).status_code == 200:
-        await matcher.finish(MessageSegment.image(url))
         logger.info('获得{}推荐图片成功！'.format(name))
+        await matcher.finish(MessageSegment.image(url))
     else:
         logger.warning('未获得{}推荐图片。'.format(name))
 
@@ -41,7 +38,7 @@ async def send_bluekun_pic(matcher: Matcher, args: Message = CommandArg()):
     if img.exists():
         with open(img, 'rb') as f:
             im = MessageSegment.image(f.read())
-        await matcher.finish(im)
         logger.info('获得{}参考面板图片成功！'.format(name))
+        await matcher.finish(im)
     else:
         logger.warning('未找到{}参考面板图片'.format(name))

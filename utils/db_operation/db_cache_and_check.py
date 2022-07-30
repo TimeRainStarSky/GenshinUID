@@ -1,4 +1,17 @@
+import os
+import re
+import random
+import string
+import datetime
+from shutil import copyfile
+
+from httpx import AsyncClient
+from nonebot.log import logger
+
+from ..mhy_api.mhy_api import bbs_Taskslist
 from .gsuid_db_pool import *  # noqa: F401,F403
+from ..mhy_api.get_mhy_data import get_mihoyo_bbs_info
+from ..mhy_api.mhy_api_tools import random_hex, old_version_get_ds_token
 
 
 async def check_db():
@@ -13,7 +26,7 @@ async def check_db():
     for row in c_data:
         try:
             aid = re.search(r'account_id=(\d*)', row[1])
-            mihoyo_id_data = aid.group(0).split('=')
+            mihoyo_id_data = aid.group(0).split('=')  # type: ignore
             mihoyo_id = mihoyo_id_data[1]
             mys_data = await get_mihoyo_bbs_info(mihoyo_id, row[1])
             for i in mys_data['data']['list']:

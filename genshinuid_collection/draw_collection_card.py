@@ -1,10 +1,9 @@
+from typing import List
 from pathlib import Path
-from typing import List, Tuple, Optional
 
-from nonebot import logger
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from nonebot.log import logger
+from PIL import Image, ImageDraw
 
-from ..utils.mhy_api.get_mhy_data import get_info
 from ..utils.get_cookies.get_cookies import GetCookies
 from ..utils.draw_image_tools.send_image_tool import convert_img
 from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
@@ -17,6 +16,10 @@ text_color = (31, 32, 26)
 gs_font_23 = genshin_font_origin(23)
 gs_font_26 = genshin_font_origin(26)
 
+based_w = 500
+based_h = 750
+white_overlay = Image.new('RGBA', (based_w, based_h), (255, 255, 255, 222))
+
 max_data = {
     '成就': 649,
     '华丽的宝箱': 139,
@@ -26,7 +29,7 @@ max_data = {
 }
 
 
-async def dataToDataStr(max, my) -> str:
+async def dataToDataStr(max: int, my: int) -> List:
     return [
         str(100 * float('{:.2f}'.format(my / max)))
         + '% | '
@@ -44,17 +47,17 @@ async def draw_collection_img(uid: str, mode: str = 'uid'):
     if not retcode:
         return retcode
     raw_data = data_def.raw_data
-    uid = data_def.uid
+    if data_def.uid:
+        uid = data_def.uid
 
     # 获取数据
-    # raw_data = await get_info(uid)
-    raw_data = raw_data['data']
+    if raw_data:
+        raw_data = raw_data['data']
+    else:
+        return
 
     # 获取背景图片各项参数
-    based_w = 500
-    based_h = 750
     img = await get_simple_bg(based_w, based_h)
-    white_overlay = Image.new('RGBA', (based_w, based_h), (255, 255, 255, 222))
     img.paste(white_overlay, (0, 0), white_overlay)
     img.paste(collection_fg_pic, (0, 0), collection_fg_pic)
     text_draw = ImageDraw.Draw(img)

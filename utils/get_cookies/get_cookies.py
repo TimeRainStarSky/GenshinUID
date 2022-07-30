@@ -42,7 +42,7 @@ class GetCookies:
                     return True
 
     async def get_mihoyo_bbs_data(self):
-        mys_data = await get_mihoyo_bbs_info(self.uid, self.useable_cookies)
+        mys_data = await get_mihoyo_bbs_info(self.uid, self.useable_cookies)  # type: ignore
         for i in mys_data['data']['list']:
             if i['game_id'] != 2:
                 mys_data['data']['list'].remove(i)
@@ -50,12 +50,12 @@ class GetCookies:
         self.nickname = mys_data['data']['list'][0]['nickname']
         self.raw_data = await get_info(self.uid, self.useable_cookies)
         self.raw_abyss_data = await get_spiral_abyss_info(
-            self.uid, self.useable_cookies, self.schedule_type
+            self.uid, self.useable_cookies, self.schedule_type  # type: ignore
         )
 
     async def get_uid_data(self):
         self.raw_abyss_data = await get_spiral_abyss_info(
-            self.uid, self.useable_cookies, self.schedule_type
+            self.uid, self.useable_cookies, self.schedule_type  # type: ignore
         )
         self.raw_data = await get_info(self.uid, self.useable_cookies)
 

@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any, List, Tuple, Union
 
-import aiofiles
+import aiofiles  # type: ignore
 from nonebot.log import logger
 from aiohttp.client import ClientSession
 
@@ -12,7 +12,6 @@ from .resource_list import REL_ALL_LIST, CHAR_ALL_LIST, WEAPON_ALL_LIST
 from ..minigg_api.get_minigg_data import (
     get_char_info,
     get_misc_info,
-    get_audio_info,
     get_weapon_info,
 )
 
@@ -69,8 +68,8 @@ async def download_by_minigg():
         logger.info(f'本次需要下载{",".join(weapon_download_list)}的图片')
         weapon_faild = await get_weapon_pic(weapon_download_list)
         if weapon_faild:
-            return_str += f'下载{",".join(char_faild)}的图片失败'
-            logger.info(f'下载{",".join(char_faild)}的图片失败')
+            return_str += f'下载{",".join(weapon_faild)}的图片失败'
+            logger.info(f'下载{",".join(weapon_faild)}的图片失败')
     else:
         logger.info('无需下载武器图片!')
 

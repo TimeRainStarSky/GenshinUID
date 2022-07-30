@@ -13,16 +13,16 @@ from ..utils.db_operation.db_operation import (
 )
 
 
-async def add_ck(mes, qid):
+async def deal_ck(mes, qid):
     if 'stoken' in mes:
         login_ticket = (
             re.search(r'login_ticket=([0-9a-zA-Z]+)', mes)
-            .group(0)
+            .group(0)  # type: ignore
             .split('=')[1]
         )
         uid = await select_db(qid, 'uid')
         ck = await owner_cookies(uid[0])
-        mys_id = re.search(r'account_id=(\d*)', ck).group(0).split('=')[1]
+        mys_id = re.search(r'account_id=(\d*)', ck).group(0).split('=')[1]  # type: ignore
         raw_data = await get_stoken_by_login_ticket(login_ticket, mys_id)
         stoken = raw_data['data']['list'][0]['token']
         s_cookies = 'stuid={};stoken={}'.format(mys_id, stoken)
@@ -30,7 +30,7 @@ async def add_ck(mes, qid):
         return '添加Stoken成功！'
     else:
         aid = re.search(r'account_id=(\d*)', mes)
-        mysid_data = aid.group(0).split('=')
+        mysid_data = aid.group(0).split('=')  # type: ignore
         mysid = mysid_data[1]
         cookie = ';'.join(
             filter(

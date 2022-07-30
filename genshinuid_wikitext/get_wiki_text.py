@@ -288,124 +288,132 @@ async def char_wiki(name, mode='char', level=None):
         if 'errcode' in data:
             im = '不存在该角色。'
         else:
-            if 7 >= int(level) > 0:
-                if int(level) <= 3:
-                    if level == '1':
-                        data = data['combat1']
-                    elif level == '2':
-                        data = data['combat2']
-                    elif level == '3':
-                        data = data['combat3']
-                    skill_name = data['name']
-                    skill_info = data['info']
-                    skill_detail = ''
+            if level:
+                if 7 >= int(level) > 0:
+                    if int(level) <= 3:
+                        if level == '1':
+                            data = data['combat1']
+                        elif level == '2':
+                            data = data['combat2']
+                        elif level == '3':
+                            data = data['combat3']
+                        skill_name = data['name']
+                        skill_info = data['info']
+                        skill_detail = ''
 
-                    mes_list = []
-                    parameters = []
-                    add_switch = True
+                        mes_list = []
+                        parameters = []
+                        add_switch = True
 
-                    labels = ''.join(data['attributes']['labels'])
-                    parameters_label = re.findall(
-                        r'{[a-zA-Z0-9]+:[a-zA-Z0-9]+}', labels
-                    )
-
-                    labels = {}
-                    for i in parameters_label:
-                        value_type = (
-                            i.replace('{', '').replace('}', '').split(':')[-1]
+                        labels = ''.join(data['attributes']['labels'])
+                        parameters_label = re.findall(
+                            r'{[a-zA-Z0-9]+:[a-zA-Z0-9]+}', labels
                         )
-                        value_index = (
-                            i.replace('{', '').replace('}', '').split(':')[0]
+
+                        labels = {}
+                        for i in parameters_label:
+                            value_type = (
+                                i.replace('{', '')
+                                .replace('}', '')
+                                .split(':')[-1]
+                            )
+                            value_index = (
+                                i.replace('{', '')
+                                .replace('}', '')
+                                .split(':')[0]
+                            )
+                            labels[value_index] = value_type
+
+                        for para in data['attributes']['parameters']:
+                            if para in labels:
+                                label_str = labels[para]
+                                for index, j in enumerate(
+                                    data['attributes']['parameters'][para]
+                                ):
+                                    if add_switch:
+                                        parameters.append({})
+
+                                    if label_str == 'F1P':
+                                        parameters[index].update(
+                                            {para: '%.1f%%' % (j * 100)}
+                                        )
+                                    if label_str == 'F2P':
+                                        parameters[index].update(
+                                            {para: '%.2f%%' % (j * 100)}
+                                        )
+                                    elif label_str == 'F1':
+                                        parameters[index].update(
+                                            {para: '%.1f' % j}
+                                        )
+                                    elif label_str == 'F2':
+                                        parameters[index].update(
+                                            {para: '%.2f' % j}
+                                        )
+                                    elif label_str == 'P':
+                                        parameters[index].update(
+                                            {para: str(round(j * 100)) + '%'}
+                                        )
+                                    elif label_str == 'I':
+                                        parameters[index].update(
+                                            {para: '%.2f' % j}
+                                        )
+                                add_switch = False
+
+                        for k in data['attributes']['labels']:
+                            k = re.sub(r':[a-zA-Z0-9]+}', '}', k)
+                            skill_detail += k + '\n'
+
+                        skill_detail = skill_detail[:-1].replace('|', ' | ')
+
+                        for i in range(1, 10):
+                            if i % 2 != 0:
+                                skill_info = skill_info.replace('**', '「', 1)
+                            else:
+                                skill_info = skill_info.replace('**', '」', 1)
+
+                        mes_list.append(
+                            {
+                                'type': 'node',
+                                'data': {
+                                    'name': '小仙',
+                                    'uin': '3399214199',
+                                    'content': '【'
+                                    + skill_name
+                                    + '】'
+                                    + '\n'
+                                    + skill_info,
+                                },
+                            }
                         )
-                        labels[value_index] = value_type
 
-                    for para in data['attributes']['parameters']:
-                        if para in labels:
-                            label_str = labels[para]
-                            for index, j in enumerate(
-                                data['attributes']['parameters'][para]
-                            ):
-                                if add_switch:
-                                    parameters.append({})
+                        for index, i in enumerate(parameters):
+                            mes = skill_detail.format(**i)
+                            node_data = {
+                                'type': 'node',
+                                'data': {
+                                    'name': '小仙',
+                                    'uin': '3399214199',
+                                    'content': 'lv.'
+                                    + str(index + 1)
+                                    + '\n'
+                                    + mes,
+                                },
+                            }
+                            mes_list.append(node_data)
+                        im = mes_list
 
-                                if label_str == 'F1P':
-                                    parameters[index].update(
-                                        {para: '%.1f%%' % (j * 100)}
-                                    )
-                                if label_str == 'F2P':
-                                    parameters[index].update(
-                                        {para: '%.2f%%' % (j * 100)}
-                                    )
-                                elif label_str == 'F1':
-                                    parameters[index].update(
-                                        {para: '%.1f' % j}
-                                    )
-                                elif label_str == 'F2':
-                                    parameters[index].update(
-                                        {para: '%.2f' % j}
-                                    )
-                                elif label_str == 'P':
-                                    parameters[index].update(
-                                        {para: str(round(j * 100)) + '%'}
-                                    )
-                                elif label_str == 'I':
-                                    parameters[index].update(
-                                        {para: '%.2f' % j}
-                                    )
-                            add_switch = False
-
-                    for k in data['attributes']['labels']:
-                        k = re.sub(r':[a-zA-Z0-9]+}', '}', k)
-                        skill_detail += k + '\n'
-
-                    skill_detail = skill_detail[:-1].replace('|', ' | ')
-
-                    for i in range(1, 10):
-                        if i % 2 != 0:
-                            skill_info = skill_info.replace('**', '「', 1)
-                        else:
-                            skill_info = skill_info.replace('**', '」', 1)
-
-                    mes_list.append(
-                        {
-                            'type': 'node',
-                            'data': {
-                                'name': '小仙',
-                                'uin': '3399214199',
-                                'content': '【'
-                                + skill_name
-                                + '】'
-                                + '\n'
-                                + skill_info,
-                            },
-                        }
-                    )
-
-                    for index, i in enumerate(parameters):
-                        mes = skill_detail.format(**i)
-                        node_data = {
-                            'type': 'node',
-                            'data': {
-                                'name': '小仙',
-                                'uin': '3399214199',
-                                'content': 'lv.' + str(index + 1) + '\n' + mes,
-                            },
-                        }
-                        mes_list.append(node_data)
-                    im = mes_list
-
+                    else:
+                        if level == '4':
+                            data = data['passive1']
+                        elif level == '5':
+                            data = data['passive2']
+                        elif level == '6':
+                            data = data['passive3']
+                        elif level == '7':
+                            data = data['passive4']
+                        skill_name = data['name']
+                        skill_info = data['info']
+                        im = '【{}】\n{}'.format(skill_name, skill_info)
                 else:
-                    if level == '4':
-                        data = data['passive1']
-                    elif level == '5':
-                        data = data['passive2']
-                    elif level == '6':
-                        data = data['passive3']
-                    elif level == '7':
-                        data = data['passive4']
-                    skill_name = data['name']
-                    skill_info = data['info']
-                    im = '【{}】\n{}'.format(skill_name, skill_info)
-            else:
-                im = '不存在该天赋。'
+                    im = '不存在该天赋。'
     return im

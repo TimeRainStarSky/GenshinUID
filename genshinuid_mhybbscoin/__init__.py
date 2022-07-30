@@ -1,5 +1,5 @@
 from ..all_import import *  # noqa: F403,F401
-from .daily_mihoyo_bbs_coin import mihoyo_coin, daily_mihoyo_bbs_coin
+from .daily_mihoyo_bbs_coin import mihoyo_coin, all_daily_mihoyo_bbs_coin
 
 bbscoin_scheduler = require('nonebot_plugin_apscheduler').scheduler
 
@@ -18,7 +18,7 @@ async def send_mihoyo_coin(
     if args:
         return
     await matcher.send('开始操作……', at_sender=True)
-    qid = int(event.sender.user_id)
+    qid = int(event.sender.user_id)  # type: ignore
     im = await mihoyo_coin(qid)
     await matcher.finish(im, at_sender=True)
 
@@ -41,7 +41,7 @@ async def sign_at_night():
 
 async def send_daily_mihoyo_bbs_sign():
     bot = get_bot()
-    im, im_private = await daily_mihoyo_bbs_coin()
+    im, im_private = await all_daily_mihoyo_bbs_coin()
     if im_private:
         for user_id in im_private:
             await bot.send_private_msg(

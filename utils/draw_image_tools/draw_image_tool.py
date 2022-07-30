@@ -1,5 +1,6 @@
 import math
 import random
+from io import BytesIO
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -10,7 +11,7 @@ BG_PATH = Path(__file__).parent / 'bg'
 
 
 async def get_simple_bg(
-    based_w: int, based_h: int, image: str = None
+    based_w: int, based_h: int, image: Optional[str] = None
 ) -> Image:
     if image:
         edit_bg = Image.open(BytesIO(get(image).content)).convert('RGBA')

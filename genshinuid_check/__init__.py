@@ -1,6 +1,7 @@
 import asyncio
 
 from ..all_import import *  # noqa: F403, F401
+from ..utils.db_operation.db_cache_and_check import check_db, check_stoken_db
 from ..utils.download_resource.download_all_resource import (
     download_all_resource,
 )
@@ -25,12 +26,11 @@ async def send_download_resource_msg(
 # 群聊内 校验Cookies 是否正常的功能，不正常自动删掉
 @check.handle()
 @handle_exception('Cookie校验', 'Cookie校验错误')
-async def check_cookies(
+async def send_check_cookie(
     bot: Bot, matcher: Matcher, args: Message = CommandArg()
 ):
     if args:
         await matcher.finish()
-        return
     raw_mes = await check_db()
     im = raw_mes[0]
     await matcher.send(im)
@@ -53,12 +53,11 @@ async def check_cookies(
 # 群聊内 校验Stoken 是否正常的功能，不正常自动删掉
 @check_stoken.handle()
 @handle_exception('Stoken校验', 'Stoken校验错误')
-async def check_stoken(
+async def send_check_stoken(
     bot: Bot, matcher: Matcher, args: Message = CommandArg()
 ):
     if args:
         await matcher.finish()
-        return
     raw_mes = await check_stoken_db()
     im = raw_mes[0]
     await matcher.send(im)

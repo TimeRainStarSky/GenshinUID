@@ -1,4 +1,4 @@
-import get_lots_data
+from ..all_import import *  # noqa: F403,F401
 
 get_lots = on_command('御神签', priority=priority)
 
@@ -10,7 +10,6 @@ async def send_lots(
 ):
     if args:
         await matcher.finish()
-        return
     qid = int(event.sender.user_id)
     raw_data = await get_a_lots(qid)
     im = base64.b64decode(raw_data).decode('utf-8')

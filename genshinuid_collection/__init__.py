@@ -5,7 +5,10 @@ from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.message.error_reply import *  # noqa: F403,F401
 
 get_collection_info = on_regex(
-    '^(\[CQ:at,qq=[0-9]+\] )?(uid|查询|mys)?([0-9]{9})?(收集|宝箱|sj|bx)(\[CQ:at,qq=[0-9]+\])?$'
+    r'^(\[CQ:at,qq=[0-9]+\] )?'
+    r'(uid|查询|mys)?([0-9]{9})?'
+    r'(收集|宝箱|sj|bx)'
+    r'(\[CQ:at,qq=[0-9]+\])?$'
 )
 
 

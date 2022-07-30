@@ -98,7 +98,7 @@ async def get_char_info(name, mode='char', level=None):
       * data (str): 获取数据信息。
     """
     url2 = None
-    url3 = None
+    url3 = ''
     data2 = None
     baseurl = 'https://info.minigg.cn/characters?query='
     if mode == 'talents':

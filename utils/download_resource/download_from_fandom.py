@@ -2,9 +2,9 @@ import re
 import random
 import asyncio
 
-import aiofiles
-from nonebot import logger
+import aiofiles  # type: ignore
 from bs4 import BeautifulSoup
+from nonebot.log import logger
 from aiohttp.client import ClientSession
 
 MAX_TASKS = 4
@@ -135,50 +135,6 @@ async def get_namecard_and_gacha_pic(char_list: dict):
                     timeout=30,
                 )
             )
-            """
-            char_icon_data = char_data_bs.find_all(
-                "img", {'data-caption': 'Character Icon'}
-            )
-            char_side_data = char_data_bs.find_all(
-                "img", {'data-caption': 'Party Icon'}
-            )
-            if chinese_name == '鹿野院平藏':
-                char_icon_data = char_data_bs.find_all(
-                    "img", {'data-caption': 'Shikanoin Heizou Icon'}
-                )
-            char_icon_url = re.search(
-                r"[\s\S]+.png", char_icon_data[0]['src']
-            ).group(0)
-            char_side_url = re.search(
-                r"[\s\S]+.png", char_side_data[0]['src']
-            ).group(0)
-            logger.info(f'添加{chinese_name}的侧视图下载任务...')
-            tasks.append(
-                asyncio.wait_for(
-                    _download(
-                        char_side_url,
-                        sess,
-                        sem,
-                        f'{avatar_id}.png',
-                        CHAR_SIDE_PATH,
-                    ),
-                    timeout=30,
-                )
-            )
-            logger.info(f'添加{chinese_name}的Icon下载任务...')
-            tasks.append(
-                asyncio.wait_for(
-                    _download(
-                        char_icon_url,
-                        sess,
-                        sem,
-                        f'{avatar_id}.png',
-                        CHAR_PATH,
-                    ),
-                    timeout=30,
-                )
-            )
-            """
             if len(tasks) >= MAX_TASKS:
                 await asyncio.gather(*tasks)
                 tasks = []

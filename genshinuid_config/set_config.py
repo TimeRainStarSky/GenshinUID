@@ -1,6 +1,6 @@
-from typing import List, Tuple, Optional
+from typing import Optional
 
-from nonebot import logger
+from nonebot.log import logger
 
 from ..utils.message.error_reply import *  # noqa: F403,F401
 from ..utils.db_operation.db_operation import open_push, config_check
@@ -76,12 +76,15 @@ async def set_config(
         if is_admin:
             logger.info(f'config_name:{status},query:{query}')
             # 执行设置
-            if await config_check(status, query):
-                im = '成功设置{}为{}。'.format(config_name, query)
-                if config_name in HINT_MAP:
-                    im += HINT_MAP[config_name]
+            if query:
+                if await config_check(status, query):
+                    im = '成功设置{}为{}。'.format(config_name, query)
+                    if config_name in HINT_MAP:
+                        im += HINT_MAP[config_name]
+                else:
+                    im = '设置失败!'
             else:
-                im = '设置失败!'
+                im = '未传入参数query!'
         else:
             im = '只有管理员才能设置群服务。'
     return im

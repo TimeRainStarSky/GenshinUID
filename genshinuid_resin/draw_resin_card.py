@@ -1,24 +1,14 @@
-import math
-import time
-import datetime
-import threading
 from pathlib import Path
-from typing import List, Tuple, Optional
 
-from httpx import get
-from nonebot import logger
-from aiohttp import ClientSession
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from nonebot.log import logger
+from PIL import Image, ImageDraw
 
-from ..utils.get_cookies.get_cookies import GetCookies
 from ..utils.mhy_api.get_mhy_data import get_daily_data
 from ..utils.enka_api.get_enka_data import get_enka_info
-from ..utils.minigg_api.get_minigg_data import get_char_info
 from ..utils.alias.enName_to_avatarId import enName_to_avatarId
 from ..utils.draw_image_tools.send_image_tool import convert_img
 from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
 from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
-from ..utils.alias.avatarId_and_name_covert import name_to_avatar_id
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
 CHAR_SIDE_PATH = Path(__file__).parents[1] / 'resource' / 'char_side'
@@ -72,12 +62,6 @@ async def draw_resin_img(uid: str):
     max_resin = daily_data['max_resin']
     resin_str = f'{resin}/{max_resin}'
     resin_percent = resin / max_resin
-    if resin_percent <= 0.6:
-        resin_color = green_color
-    elif resin_percent > 0.6 and resin_percent <= 0.8:
-        resin_color = orange_color
-    elif resin_percent > 0.8:
-        resin_color = red_color
 
     delay = 53
     # 洞天宝钱

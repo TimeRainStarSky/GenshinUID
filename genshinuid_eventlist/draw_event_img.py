@@ -32,8 +32,8 @@ async def get_month_and_time(time_data: str) -> List:
         month = time_data[:5]
         time = '更新后'
     else:
-        time_data = time_data.split(' ')
-        time_data[0] = time_data[0].replace('-', '/')
+        time_data = time_data.split(' ')  # type: ignore
+        time_data[0] = time_data[0].replace('-', '/')  # type: ignore
         month = time_data[0].split('/', 1)[1]
         time = ':'.join(time_data[1].split(':')[:-1])
         if int(time.split(':')[0]) <= 12:
@@ -43,7 +43,7 @@ async def get_month_and_time(time_data: str) -> List:
     return [month, time]
 
 
-async def draw_event_img() -> None:
+async def save_draw_event_img() -> None:
     """
     :说明:
       绘制原神活动列表图片，存放至同级目录``event.png``。
@@ -63,7 +63,7 @@ async def draw_event_img() -> None:
                         time_data = content_bs.find_all('p')[index + 1].text
                         if '<t class=' in time_data:
                             time_data = findall(
-                                '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                                r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                                 time_data,
                             )[0]
                         month_start, time_start = await get_month_and_time(
@@ -79,7 +79,7 @@ async def draw_event_img() -> None:
                                 if '<t class=' in s:
                                     time_datas.append(
                                         findall(
-                                            '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                                            r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                                             s,
                                         )[0]
                                     )
@@ -114,7 +114,7 @@ async def draw_event_img() -> None:
                                     ].text
                                     if '<t class=' in time_data_end:
                                         time_data_end = findall(
-                                            '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                                            r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                                             time_data_end,
                                         )[0]
                                         (
@@ -134,7 +134,7 @@ async def draw_event_img() -> None:
                                     break
                                 elif '<t class=' in time_data:
                                     time_data = findall(
-                                        '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                                        r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                                         time_data,
                                     )[0]
                                     (
@@ -147,7 +147,7 @@ async def draw_event_img() -> None:
                                     ].text
                                     if '<t class=' in time_data_end:
                                         time_data_end = findall(
-                                            '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                                            r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                                             time_data_end,
                                         )[0]
                                         (
@@ -179,18 +179,18 @@ async def draw_event_img() -> None:
                         )
                         if '<t class=' in start_time:
                             start_time = findall(
-                                '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                                r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                                 start_time,
                             )[0]
                         end_time = findall(
-                            '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                            r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                             content_bs.find_all('tr')[1]
                             .td.find_all('p')[2]
                             .text,
                         )[0]
                         if '<t class=' in end_time:
                             end_time = findall(
-                                '<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
+                                r'<[a-zA-Z]+.*?>([\s\S]*?)</[a-zA-Z]*?>',
                                 end_time,
                             )[0]
 

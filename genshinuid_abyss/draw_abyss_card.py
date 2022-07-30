@@ -1,19 +1,10 @@
-import math
 import time
-import datetime
-import threading
-from io import BytesIO
 from pathlib import Path
-from base64 import b64encode
-from typing import List, Tuple, Optional
 
-from httpx import get
-from nonebot import logger
-from aiohttp import ClientSession
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from nonebot.log import logger
+from PIL import Image, ImageDraw
 
 from ..utils.get_cookies.get_cookies import GetCookies
-from ..utils.mhy_api.get_mhy_data import get_character
 from ..utils.draw_image_tools.send_image_tool import convert_img
 from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
 from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
