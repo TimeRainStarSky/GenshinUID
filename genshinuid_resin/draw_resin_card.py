@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from nonebot.log import logger
@@ -33,8 +34,14 @@ async def draw_resin_img(uid: str):
     # 获取数据
     daily_data = await get_daily_data(uid)
     daily_data = daily_data['data']
-    player_data = await get_enka_info(uid)
-    # player_data = {}
+    enta_data_path = (
+        Path(__file__).parents[1] / 'player' / uid / 'rawData.json'
+    )
+    if enta_data_path.exists:
+        with open(enta_data_path, 'r', encoding='utf-8') as f:
+            player_data = json.load(f)
+    else:
+        player_data = await get_enka_info(uid)
 
     # 处理数据
     if player_data:

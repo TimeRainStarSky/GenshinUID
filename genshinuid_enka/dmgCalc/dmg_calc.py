@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import Tuple
 
-from PIL import Image, ImageDraw, ImageFont, ImageChops
+from PIL import Image, ImageDraw
 
 from ...utils.genshin_fonts.genshin_fonts import genshin_font_origin
 
@@ -34,7 +34,7 @@ dmgBar_1 = Image.open(DMG_TEXT_PATH / 'dmgBar_1.png')
 dmgBar_2 = Image.open(DMG_TEXT_PATH / 'dmgBar_2.png')
 
 
-async def draw_dmgCacl_img(raw_data: dict) -> Image:
+async def draw_dmgCacl_img(raw_data: dict) -> Tuple[Image.Image, int]:
     char_name = raw_data['avatarName']
     char_level = int(raw_data['avatarLevel'])
     weaponName = raw_data['weaponInfo']['weaponName']
@@ -345,6 +345,8 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
             effect_prop = prop['hp']
         elif '防御' in power_list[power_name]['type']:
             effect_prop = prop['defense']
+        else:
+            effect_prop = prop['attack']
         power = power_list[power_name]['value'][
             prop['{}_skill_level'.format(power_name[0])]
         ]
@@ -418,7 +420,7 @@ async def draw_dmgCacl_img(raw_data: dict) -> Image:
     return result_img, len(power_list) + 2
 
 
-async def power_to_value(power: str, power_plus: int) -> List:
+async def power_to_value(power: str, power_plus: int) -> Tuple[float, float]:
     """
     将power转换为value
     """

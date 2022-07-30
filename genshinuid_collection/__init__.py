@@ -8,7 +8,8 @@ get_collection_info = on_regex(
     r'^(\[CQ:at,qq=[0-9]+\] )?'
     r'(uid|查询|mys)?([0-9]{9})?'
     r'(收集|宝箱|sj|bx)'
-    r'(\[CQ:at,qq=[0-9]+\])?$'
+    r'(\[CQ:at,qq=[0-9]+\])?$',
+    block=True,
 )
 
 

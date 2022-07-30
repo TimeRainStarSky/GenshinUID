@@ -3,22 +3,23 @@ import math
 import asyncio
 from io import BytesIO
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import Tuple, Union, Optional
 
 from httpx import get
-from nonebot import logger
-from PIL import Image, ImageDraw, ImageFont, ImageChops
+from nonebot.log import logger
+from PIL import Image, ImageDraw, ImageChops
 
 from .dmgCalc.dmg_calc import *
+from ..utils.draw_image_tools.send_image_tool import convert_img
 from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
 
-R_PATH = Path(__file__).parents[0]
+R_PATH = Path(__file__).parent
+RESOURCE_PATH = Path(__file__).parents[1] / 'resource'
 TEXT_PATH = R_PATH / 'texture2D'
-ICON_PATH = R_PATH / 'icon'
-GACHA_PATH = R_PATH / 'gachaImg'
-PLAYER_PATH = R_PATH / 'player'
-RELIC_PATH = Path(__file__).parents[1] / 'resource' / 'reliquaries'
-MAP_PATH = R_PATH / 'map'
+ICON_PATH = RESOURCE_PATH / 'icon'
+GACHA_PATH = RESOURCE_PATH / 'gacha_img'
+PLAYER_PATH = Path(__file__).parents[1] / 'player'
+RELIC_PATH = RESOURCE_PATH / 'reliquaries'
 ETC_PATH = R_PATH / 'etc'
 
 
@@ -72,7 +73,7 @@ with open(ETC_PATH / 'avatarCardOffsetMap.json', 'r', encoding='UTF-8') as f:
     avatarCardOffsetMap = json.load(f)
 
 
-def get_star_png(star: int) -> Image:
+def get_star_png(star: int) -> Image.Image:
     png = Image.open(TEXT_PATH / 's-{}.png'.format(str(star)))
     return png
 
@@ -112,7 +113,7 @@ async def get_artifacts_value(
     baseHp: int,
     baseDef: int,
     charName: str,
-) -> int:
+) -> float:
     if charName not in ATTR_MAP:
         ATTR_MAP[charName] = ['攻击力', '暴击率', '暴击伤害']
     if subName in ATTR_MAP[charName] and subName in ['血量', '防御力', '攻击力']:
@@ -122,6 +123,8 @@ async def get_artifacts_value(
             base = (subValue / baseDef) * 100
         elif subName == '攻击力':
             base = (subValue / baseAtk) * 100
+        else:
+            base = 1.0
         value = float('{:.2f}'.format(base / VALUE_MAP[subName]))
     elif subName in ['百分比血量', '百分比防御力', '百分比攻击力']:
         subName = subName.replace('百分比', '')
@@ -171,6 +174,7 @@ async def get_first_main(mainName: str) -> str:
 
 
 async def get_char_percent(raw_data: dict) -> str:
+    percent = ''
     char_name = raw_data['avatarName']
     weaponName = raw_data['weaponInfo']['weaponName']
     weaponType = raw_data['weaponInfo']['weaponType']
@@ -326,6 +330,7 @@ async def get_char_percent(raw_data: dict) -> str:
             dmgBonus_cal += 0.12
 
         if '蒸发' in cal['action'] or '融化' in cal['action']:
+            k = 0
             if '蒸发' in cal['action']:
                 if raw_data['avatarElement'] == 'Pyro':
                     k = 1.5
@@ -489,12 +494,12 @@ async def get_char_percent(raw_data: dict) -> str:
             percent = '{:.2f}'.format(dmg / cal['other2'] * 100)
         elif cal['power'] == '防御力':
             percent = '{:.2f}'.format(dmg / cal['other'] * 100)
-    else:
-        percent = 0.00
     return percent
 
 
-async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
+async def draw_char_img(
+    raw_data: dict, charUrl: Optional[str] = None
+) -> bytes:
     char_name = raw_data['avatarName']
     char_level = raw_data['avatarLevel']
     char_fetter = raw_data['avatarFetter']
@@ -511,10 +516,7 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
             )
         else:
             offset_x, offset_y = 200, 0
-        char_img = Image.open(
-            GACHA_PATH
-            / 'UI_Gacha_AvatarImg_{}.png'.format(raw_data['avatarEnName'])
-        )  # 角色图像
+        char_img = Image.open(GACHA_PATH / f'{char_name}.png')  # 角色图像
 
     # 确定图片的长宽
     w, h = char_img.size
@@ -527,7 +529,7 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
         new_h = math.ceil(based_new_w / float(scale_f))
         if scale_f > based_scale:
             bg_img2 = char_img.resize(
-                (new_w, based_new_h), Image.Resampling.LANCZOS
+                (new_w, based_new_h), Image.Resampling.LANCZOS  # type: ignore
             )
             x1 = new_w / 2 - based_new_w / 2 + offset_x
             y1 = 0 + offset_y / 2
@@ -535,13 +537,13 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
             y2 = based_new_h - offset_y / 2
         else:
             bg_img2 = char_img.resize(
-                (based_new_w, new_h), Image.Resampling.LANCZOS
+                (based_new_w, new_h), Image.Resampling.LANCZOS  # type: ignore
             )
             x1 = 0 + offset_x
             y1 = new_h / 2 - based_new_h / 2 + offset_y / 2
             x2 = based_new_w
             y2 = new_h / 2 + based_new_h / 2 - offset_y / 2
-        char_img = bg_img2.crop((x1, y1, x2, y2))
+        char_img = bg_img2.crop((x1, y1, x2, y2))  # type: ignore
 
     dmg_img, dmg_len = await draw_dmgCacl_img(raw_data)
     img_w, img_h = 950, 1850 + dmg_len * 40
@@ -551,7 +553,7 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
         new_overlay_h = img_h
         new_overlay_w = math.ceil(new_overlay_h * overlay_w / overlay_h)
         overlay = overlay.resize(
-            (new_overlay_w, new_overlay_h), Image.Resampling.LANCZOS
+            (new_overlay_w, new_overlay_h), Image.Resampling.LANCZOS  # type: ignore
         )
         overlay = overlay.crop((0, 0, img_w, img_h))
     color_img = Image.new(
@@ -578,7 +580,7 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
                 ICON_PATH / '{}.png'.format(talent['talentIcon'])
             )
             talent_img_new = talent_img.resize(
-                (50, 50), Image.Resampling.LANCZOS
+                (50, 50), Image.Resampling.LANCZOS  # type: ignore
             ).convert("RGBA")
             img.paste(
                 talent_img_new, (850, 375 + talent_num * 81), talent_img_new
@@ -606,7 +608,7 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
     for skill_num, skill in enumerate(skillList[0:2] + [skillList[-1]]):
         skill_img = Image.open(ICON_PATH / '{}.png'.format(skill['skillIcon']))
         skill_img_new = skill_img.resize(
-            (50, 50), Image.Resampling.LANCZOS
+            (50, 50), Image.Resampling.LANCZOS  # type: ignore
         ).convert("RGBA")
         img.paste(skill_img_new, (78, 756 + 101 * skill_num), skill_img_new)
 
@@ -728,7 +730,7 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
             RELIC_PATH / '{}.png'.format(aritifact['aritifactName'])
         )
         artifacts_piece_new_img = artifacts_piece_img.resize(
-            (75, 75), Image.Resampling.LANCZOS
+            (75, 75), Image.Resampling.LANCZOS  # type: ignore
         ).convert("RGBA")
         # artifacts_piece_new_img.putalpha(
         #    artifacts_piece_new_img.getchannel('A').point(lambda x: round(x * 0.5) if x > 0 else 0))
@@ -1029,14 +1031,14 @@ async def draw_char_card(raw_data: dict, charUrl: str = None) -> bytes:
 
 
 async def draw_single_card(
-    img: Image,
+    img: Image.Image,
     char: dict,
     index: int,
     color: Tuple[int, int, int],
     x_limit: int,
-    char_card_mask: Image,
-    char_card_1: Image,
-    img_card: Image,
+    char_card_mask: Image.Image,
+    char_card_1: Image.Image,
+    img_card: Image.Image,
 ):
 
     size_36 = genshin_font_origin(36)
@@ -1131,7 +1133,7 @@ async def draw_single_card(
     )
 
 
-async def draw_cahrcard_list(uid: str, limit: int = 24) -> str:
+async def draw_cahrcard_list(uid: str, limit: int = 24) -> Union[str, bytes]:
     uid_fold = PLAYER_PATH / str(uid)
     char_file_list = uid_fold.glob('*')
     char_list = []
@@ -1207,8 +1209,5 @@ async def draw_cahrcard_list(uid: str, limit: int = 24) -> str:
         )
     await asyncio.wait(tasks)
 
-    img = img.convert('RGB')
-    result_buffer = BytesIO()
-    img.save(result_buffer, format='JPEG', subsampling=0, quality=90)
-    res = result_buffer.getvalue()
+    res = await convert_img(img)
     return res

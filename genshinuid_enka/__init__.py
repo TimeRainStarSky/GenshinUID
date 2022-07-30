@@ -1,16 +1,82 @@
-from .draw_char_card import *
-from .enka_to_data import enka_to_data
+from pathlib import Path
 
-refresh = on_command('强制刷新', priority=priority)
-get_charcard = on_regex('查询', priority=priority)
-get_charcard_list = on_command('毕业度统计', priority=priority)
+from .draw_char_card import *
+from .draw_char_card import draw_char_img
+from ..all_import import *  # noqa: F401,F403
+from ..utils.enka_api.enka_to_data import enka_to_data
+from ..utils.message.error_reply import *  # noqa: F401,F403
+from ..utils.alias.alias_to_char_name import alias_to_char_name
+
+refresh = on_command('强制刷新')
+get_charcard_list = on_command('毕业度统计')
+get_char_info = on_regex(
+    r'^(\[CQ:at,qq=[0-9]+\] )?(uid|查询|mys)([0-9]{9})?'
+    r'([\u4e00-\u9fffa-zA-Z0-9]*)(\[CQ:at,qq=[0-9]+\])?$',
+    priority=2,
+)
 
 refresh_scheduler = require('nonebot_plugin_apscheduler').scheduler
 
+PLAYER_PATH = Path(__file__).parents[1] / 'player'
 
-@refresh_scheduler.scheduled_job('cron', hour='4')
-async def daily_refresh_char_data():
-    await refresh_char_data()
+
+@get_char_info.handle()
+@handle_exception('查询角色面板')
+async def send_char_info(
+    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    matcher: Matcher,
+    args: Tuple[Any, ...] = RegexGroup(),
+    custom: ImageAndAt = Depends(),
+):
+    logger.info('开始执行[查询角色面板]')
+    logger.info('[查询角色面板]参数: {}'.format(args))
+    at = custom.get_first_at()
+    if at:
+        qid = at
+    else:
+        qid = event.user_id
+    logger.info('[查询角色面板]QQ: {}'.format(qid))
+
+    if args[1] == 'mys':
+        mode = 'mys'
+    else:
+        mode = 'uid'
+
+    # 判断uid
+    if args[2] is None:
+        uid = await select_db(qid, mode='uid')
+        uid = uid[0]
+    else:
+        uid = args[2]
+    logger.info('[查询角色面板]uid: {}'.format(uid))
+
+    player_path = PLAYER_PATH / str(uid)
+    if args[3] == '展柜角色':
+        char_file_list = player_path.glob('*')
+        char_list = []
+        for i in char_file_list:
+            file_name = i.name
+            if '\u4e00' <= file_name[0] <= '\u9fff':
+                char_list.append(file_name.split('.')[0])
+        char_list_str = ','.join(char_list)
+        await matcher.finish(f'UID{uid}当前缓存角色:{char_list_str}', at_sender=True)
+    else:
+        char_name = await alias_to_char_name(args[3])
+        char_path = player_path / f'{char_name}.json'
+        if char_path.exists():
+            with open(char_path, 'r', encoding='utf8') as fp:
+                char_data = json.load(fp)
+        else:
+            await matcher.finish(CHAR_HINT.format(char_name), at_sender=True)
+
+    im = await draw_char_img(char_data)
+
+    if isinstance(im, str):
+        await matcher.finish(im)
+    elif isinstance(im, bytes):
+        await matcher.finish(MessageSegment.image(im))
+    else:
+        await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')
 
 
 async def refresh_char_data():
@@ -48,31 +114,29 @@ async def send_card_info(
     message = args.extract_plain_text().strip().replace(' ', '')
     uid = re.findall(r'\d+', message)  # str
     m = ''.join(re.findall('[\u4e00-\u9fa5]', message))
-    qid = int(event.sender.user_id)
+    qid = int(event.sender.user_id)  # type: ignore
 
     if len(uid) >= 1:
         uid = uid[0]
     else:
         if m == '全部数据':
-            if qid in superusers:
-                await refresh.send('开始刷新全部数据，这可能需要相当长的一段时间！！')
+            if qid in SUPERUSERS:
+                await matcher.send('开始刷新全部数据，这可能需要相当长的一段时间！！')
                 im = await refresh_char_data()
                 await matcher.finish(str(im))
-                return
             else:
                 return
         else:
             uid = await select_db(qid, mode='uid')
             uid = uid[0]
     im = await enka_to_data(uid)
-    await matcher.finish(str(im))
     logger.info(f'UID{uid}获取角色数据成功！')
+    await matcher.finish(str(im))
 
 
 @get_charcard_list.handle()
 @handle_exception('毕业度统计')
 async def send_charcard_list(
-    bot: Bot,
     event: Union[GroupMessageEvent, PrivateMessageEvent],
     matcher: Matcher,
     args: Message = CommandArg(),
@@ -90,12 +154,12 @@ async def send_charcard_list(
         uid = await select_db(at, mode='uid')
         message = message.replace(str(at), '')
     else:
-        uid = await select_db(int(event.sender.user_id), mode='uid')
+        uid = await select_db(int(event.sender.user_id), mode='uid')  # type: ignore
     uid = uid[0]
     im = await draw_cahrcard_list(uid, limit)
 
+    logger.info(f'UID{uid}获取角色数据成功！')
     if isinstance(im, bytes):
         await matcher.finish(MessageSegment.image(im))
     else:
         await matcher.finish(str(im))
-    logger.info(f'UID{uid}获取角色数据成功！')

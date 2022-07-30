@@ -5,7 +5,8 @@ get_abyss_info = on_regex(
     r'^(\[CQ:at,qq=[0-9]+\] )?'
     r'(uid|查询|mys)?([0-9]{9})?(上期)?(深渊|sy)'
     r'(9|10|11|12|九|十|十一|十二)?(层)?'
-    r'(\[CQ:at,qq=[0-9]+\] )?$'
+    r'(\[CQ:at,qq=[0-9]+\] )?$',
+    block=True,
 )
 
 
@@ -55,7 +56,8 @@ async def send_abyss_info(
         )
     else:
         floor = args[5]
-    floor = int(floor)
+    if floor is not None:
+        floor = int(floor)
     logger.info('[查询深渊信息]深渊层数: {}'.format(floor))
 
     im = await draw_abyss_img(uid, floor, mode, schedule_type)

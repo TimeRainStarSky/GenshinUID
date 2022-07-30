@@ -4,7 +4,9 @@ from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.message.error_reply import *  # noqa: F403,F401
 
-get_resin_info = on_command('每日', aliases={'mr', '状态', '实时便笺', '便笺', '便签'})
+get_resin_info = on_command(
+    '每日', aliases={'mr', '状态', '实时便笺', '便笺', '便签'}, block=True
+)
 # get_daily_info = on_command('当前状态')
 
 
