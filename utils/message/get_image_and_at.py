@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Union
 
 from nonebot.adapters.onebot.v11 import MessageEvent
 

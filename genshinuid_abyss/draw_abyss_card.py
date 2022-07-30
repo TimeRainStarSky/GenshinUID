@@ -1,5 +1,6 @@
 import time
 from pathlib import Path
+from typing import Union, Optional
 
 from nonebot.log import logger
 from PIL import Image, ImageDraw
@@ -26,12 +27,12 @@ genshin_font_32 = genshin_font_origin(32)
 genshin_font_27 = genshin_font_origin(27)
 
 
-async def get_abyss_star_pic(star: int) -> Image:
+async def get_abyss_star_pic(star: int) -> Image.Image:
     star_pic = Image.open(TEXT_PATH / f'star{star}.png')
     return star_pic
 
 
-async def get_rarity_pic(rarity: int) -> Image:
+async def get_rarity_pic(rarity: int) -> Image.Image:
     rarity_pic = Image.open(TEXT_PATH / f'rarity{rarity}.png')
     return rarity_pic
 
@@ -40,16 +41,19 @@ async def get_rank_data(data: dict, path: Path):
     char_id = data[0]['avatar_id']
     char_pic = Image.open(path / f'{char_id}.png').convert('RGBA')
     if path == CHAR_STAND_PATH:
-        char_pic = char_pic.resize((862, 528), Image.Resampling.BICUBIC)
+        char_pic = char_pic.resize((862, 528), Image.Resampling.BICUBIC)  # type: ignore
     elif path == CHAR_SIDE_PATH:
-        char_pic = char_pic.resize((60, 60), Image.Resampling.BICUBIC)
+        char_pic = char_pic.resize((60, 60), Image.Resampling.BICUBIC)  # type: ignore
     rank_value = str(data[0]['value'])
     return char_pic, rank_value
 
 
 async def draw_abyss_img(
-    uid: str, floor: str = None, mode: str = 'uid', schedule_type: str = '1'
-) -> Image:
+    uid: str,
+    floor: Optional[int] = None,
+    mode: str = 'uid',
+    schedule_type: str = '1',
+) -> Union[bytes, str]:
     # 获取Cookies
     data_def = GetCookies()
     retcode = await data_def.get_useable_cookies(uid, mode, schedule_type)
@@ -57,18 +61,24 @@ async def draw_abyss_img(
         return retcode
     raw_data = data_def.raw_data
     raw_abyss_data = data_def.raw_abyss_data
-    use_cookies = data_def.useable_cookies
-    uid = data_def.uid
+    if data_def.uid:
+        uid = data_def.uid
 
     # 获取数据
-    raw_abyss_data = raw_abyss_data['data']
-    char_data = raw_data['data']['avatars']
+    if raw_abyss_data:
+        raw_abyss_data = raw_abyss_data['data']
+    else:
+        return '没有获取到深渊数据'
+    if raw_data:
+        char_data = raw_data['data']['avatars']
+    else:
+        return '没有获取到角色数据'
     char_temp = {}
 
     # 获取查询者数据
     is_unfull = False
     if floor:
-        floor = int(floor) - 9
+        floor = floor - 9
         if floor < 0:
             return '楼层不能小于9层!'
         if len(raw_abyss_data['floors']) >= floor + 1:
@@ -209,24 +219,24 @@ async def draw_abyss_img(
                     char_pic = (
                         Image.open(CHAR_PATH / f'{char["id"]}.png')
                         .convert('RGBA')
-                        .resize((150, 150), Image.Resampling.LANCZOS)
+                        .resize((150, 150), Image.Resampling.LANCZOS)  # type: ignore
                     )
                     char_img = Image.new('RGBA', (150, 190), (0, 0, 0, 0))
                     char_img.paste(char_pic, (0, 3), char_pic)
                     char_bg = Image.alpha_composite(char_bg, char_img)
                     char_card.paste(char_bg, (0, 0), char_mask)
                     char_card = Image.alpha_composite(char_card, char_frame)
-                    char_card.draw = ImageDraw.Draw(char_card)
-                    char_card.draw.text(
+                    char_card_draw = ImageDraw.Draw(char_card)
+                    char_card_draw.text(
                         (75, 170),
                         f'Lv.{char["level"]}',
                         font=genshin_font_32,
                         fill=text_floor_color,
                         anchor='mm',
                     )
-                    char_card.draw.text(
+                    char_card_draw.text(
                         (6, 113),
-                        f'{talent_num}命',
+                        f'{talent_num}命',  # type: ignore
                         font=genshin_font_27,
                         fill=text_floor_color,
                         anchor='lm',

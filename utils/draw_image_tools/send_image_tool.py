@@ -4,7 +4,7 @@ from base64 import b64encode
 from PIL import Image
 
 
-async def convert_img(img: Image, is_base64: bool = False):
+async def convert_img(img: Image.Image, is_base64: bool = False):
     """
     :说明:
       将PIL.Image对象转换为bytes或者base64格式。

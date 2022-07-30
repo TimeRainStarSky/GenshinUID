@@ -4,15 +4,15 @@ from io import BytesIO
 from pathlib import Path
 from typing import List, Tuple, Optional
 
+from PIL import Image
 from httpx import get
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 BG_PATH = Path(__file__).parent / 'bg'
 
 
 async def get_simple_bg(
     based_w: int, based_h: int, image: Optional[str] = None
-) -> Image:
+) -> Image.Image:
     if image:
         edit_bg = Image.open(BytesIO(get(image).content)).convert('RGBA')
     else:
@@ -47,7 +47,7 @@ class CustomizeImage:
         self.char_high_color = self.get_char_high_color(self.bg_color)
 
     @staticmethod
-    def get_image(image: str, based_w: int, based_h: int) -> Image:
+    def get_image(image: str, based_w: int, based_h: int) -> Image.Image:
         # 获取背景图片
         if image:
             edit_bg = Image.open(BytesIO(get(image).content)).convert('RGBA')
@@ -71,15 +71,15 @@ class CustomizeImage:
         return bg_img
 
     @staticmethod
-    def get_bg_color(edit_bg: Image) -> Tuple[int, int, int]:
+    def get_bg_color(edit_bg: Image.Image) -> Tuple[int, int, int]:
         # 获取背景主色
         color = 8
         q = edit_bg.quantize(colors=color, method=2)
-        bg_color = None
+        bg_color = (0, 0, 0)
         based_light = 195
         temp = 9999
         for i in range(0, color):
-            bg = tuple(q.getpalette()[i * 3 : (i * 3) + 3])
+            bg = tuple(q.getpalette()[i * 3 : (i * 3) + 3])  # type: ignore
             light_value = bg[0] * 0.3 + bg[1] * 0.6 + bg[2] * 0.1
             if abs(light_value - based_light) < temp:
                 bg_color = bg
