@@ -195,7 +195,7 @@ async def get_weapon_pic(name_list: List):
         for name in name_list:
             logger.info(f'正在下载武器{name}的图片')
             raw_data = await get_weapon_info(name)
-            icon_url = raw_data['images']['awakenicon']
+            icon_url = raw_data['images']['icon']
             tasks.append(
                 asyncio.wait_for(
                     _download(
