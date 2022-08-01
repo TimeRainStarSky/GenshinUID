@@ -51,7 +51,7 @@ async def get_weapon_pic(weapon_rarity: int) -> Image.Image:
     return Image.open(WEAPON_BG_PATH / f'weapon_bg{weapon_rarity}.png')
 
 
-async def _draw_char_pic(img: Image.Image, char_data: dict, index: int):
+async def _draw_char_full_pic(img: Image.Image, char_data: dict, index: int):
     result = Image.new('RGBA', (250, 150), (0, 0, 0, 0))
     char_card_img = Image.new('RGBA', (250, 150), (0, 0, 0, 0))
     if char_data['rarity'] >= 5:
@@ -63,10 +63,8 @@ async def _draw_char_pic(img: Image.Image, char_data: dict, index: int):
     ).convert('RGBA')
     weapon_pic_scale = weapon_pic.resize((50, 50))
     char_img = Image.open(CHAR_PATH / f'{char_data["id"]}.png').convert('RGBA')
-    # w, h = char_img.size
-    # char_img_scale = char_img.resize((int(w * 0.2), int(h * 0.2)))
     char_img_scale = char_img.resize((148, 148))
-    char_card_img.paste(char_img_scale, (-20, 0), char_img_scale)
+    char_card_img.paste(char_img_scale, (-20, 5), char_img_scale)
     char_card_img.paste(char_card_fg, (0, 0), char_card_fg)
     fetter_pic = await get_fetter_pic(char_data['fetter'])
     talent_pic = await get_talent_pic(char_data['actived_constellation_num'])
@@ -105,6 +103,18 @@ async def _draw_char_pic(img: Image.Image, char_data: dict, index: int):
     )
 
 
+async def _draw_text(
+    text_draw: ImageDraw.ImageDraw, text: str, pos: Tuple[int, int]
+):
+    text_draw.text(
+        pos,
+        text,
+        text_color,
+        gs_font_23,
+        anchor='lm',
+    )
+
+
 async def draw_pic(
     uid: str,
     mode: str = 'uid',
@@ -127,11 +137,8 @@ async def draw_pic(
         return '没有找到角色信息!'
 
     char_ids = []
-    char_names = []
-
     for i in char_data:
         char_ids.append(i['id'])
-        char_names.append(i['name'])
 
     char_rawdata = await get_character(uid, char_ids, use_cookies)
     char_datas = char_rawdata['data']['avatars']
@@ -204,155 +211,157 @@ async def draw_pic(
     )
 
     # 世界探索
+    task = []
     for world in raw_data['world_explorations']:
         # 渊下宫
         if world['id'] == 5:
             # 探索
-            text_draw.text(
-                (937, 865),
-                f'{world["exploration_percentage"] / 10}%',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'{world["exploration_percentage"] / 10}%',
+                    (937, 865),
+                )
             )
         # 层岩巨渊
         elif world['id'] == 6:
             # 地上探索
-            text_draw.text(
-                (581, 825),
-                f'{world["exploration_percentage"] / 10}%',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'{world["exploration_percentage"] / 10}%',
+                    (581, 825),
+                )
             )
             # 流明石
-            text_draw.text(
-                (603, 900),
-                f'Lv.{world["offerings"][0]["level"]}',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'Lv.{world["offerings"][0]["level"]}',
+                    (603, 900),
+                )
             )
         # 地下矿区
         elif world['id'] == 7:
             # 地下探索
-            text_draw.text(
-                (581, 862),
-                f'{world["exploration_percentage"] / 10}%',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'{world["exploration_percentage"] / 10}%',
+                    (581, 862),
+                )
             )
         # 稻妻
         elif world['id'] == 4:
             # 探索
-            text_draw.text(
-                (937, 652),
-                f'{world["exploration_percentage"] / 10}%',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'{world["exploration_percentage"] / 10}%',
+                    (937, 652),
+                )
             )
             # 等阶
-            text_draw.text(
-                (937, 677),
-                f'Lv.{world["level"]}',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'Lv.{world["level"]}',
+                    (937, 677),
+                )
             )
             # 神樱
-            text_draw.text(
-                (937, 702),
-                f'Lv.{world["offerings"][0]["level"]}',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'Lv.{world["offerings"][0]["level"]}',
+                    (937, 702),
+                )
             )
             # 雷神瞳
-            text_draw.text(
-                (960, 727),
-                str(raw_data['stats']['electroculus_number']),
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    str(raw_data['stats']['electroculus_number']),
+                    (960, 727),
+                )
             )
         # 雪山
         elif world['id'] == 3:
             # 探索
-            text_draw.text(
-                (228, 845),
-                f'{world["exploration_percentage"] / 10}%',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'{world["exploration_percentage"] / 10}%',
+                    (228, 845),
+                )
             )
             # 供奉
-            text_draw.text(
-                (238, 882),
-                f'Lv.{world["level"]}',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'Lv.{world["level"]}',
+                    (238, 882),
+                )
             )
         # 璃月
         elif world['id'] == 2:
             # 探索
-            text_draw.text(
-                (581, 660),
-                f'{world["exploration_percentage"] / 10}%',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'{world["exploration_percentage"] / 10}%',
+                    (581, 660),
+                )
             )
             # 等阶
-            text_draw.text(
-                (581, 698),
-                f'Lv.{world["level"]}',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'Lv.{world["level"]}',
+                    (581, 698),
+                )
             )
             # 岩神瞳
-            text_draw.text(
-                (602, 735),
-                str(raw_data['stats']['geoculus_number']),
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    str(raw_data['stats']['geoculus_number']),
+                    (602, 735),
+                )
             )
         # 蒙德
         elif world['id'] == 1:
             # 探索
-            text_draw.text(
-                (230, 660),
-                f'{world["exploration_percentage"] / 10}%',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'{world["exploration_percentage"] / 10}%',
+                    (230, 660),
+                )
             )
             # 等阶
-            text_draw.text(
-                (230, 698),
-                f'Lv.{world["level"]}',
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    f'Lv.{world["level"]}',
+                    (230, 698),
+                )
             )
             # 风神瞳
-            text_draw.text(
-                (253, 735),
-                str(raw_data['stats']['anemoculus_number']),
-                text_color,
-                gs_font_23,
-                anchor='lm',
+            task.append(
+                _draw_text(
+                    text_draw,
+                    str(raw_data['stats']['anemoculus_number']),
+                    (253, 735),
+                )
             )
+    await asyncio.gather(*task)
 
     if char_num > 8:
         tasks = []
         for index, char in enumerate(char_datas):
             tasks.append(
-                _draw_char_pic(
+                _draw_char_full_pic(
                     img,
                     char,
                     index,

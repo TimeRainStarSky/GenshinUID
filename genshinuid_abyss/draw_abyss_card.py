@@ -1,6 +1,7 @@
 import time
+import asyncio
 from pathlib import Path
-from typing import Union, Optional
+from typing import List, Union, Optional
 
 from nonebot.log import logger
 from PIL import Image, ImageDraw
@@ -48,6 +49,68 @@ async def get_rank_data(data: dict, path: Path):
     return char_pic, rank_value
 
 
+async def _draw_abyss_card(
+    char: dict,
+    talent_num: str,
+    floor_pic: Image.Image,
+    index_char: int,
+    index_part: int,
+):
+    char_card = Image.new('RGBA', (150, 190), (0, 0, 0, 0))
+    # 根据稀有度获取背景
+    char_bg = await get_rarity_pic(char['rarity'])
+    char_pic = (
+        Image.open(CHAR_PATH / f'{char["id"]}.png')
+        .convert('RGBA')
+        .resize((150, 150), Image.Resampling.LANCZOS)  # type: ignore
+    )
+    char_img = Image.new('RGBA', (150, 190), (0, 0, 0, 0))
+    char_img.paste(char_pic, (0, 3), char_pic)
+    char_bg = Image.alpha_composite(char_bg, char_img)
+    char_card.paste(char_bg, (0, 0), char_mask)
+    char_card = Image.alpha_composite(char_card, char_frame)
+    char_card_draw = ImageDraw.Draw(char_card)
+    char_card_draw.text(
+        (75, 170),
+        f'Lv.{char["level"]}',
+        font=genshin_font_32,
+        fill=text_floor_color,
+        anchor='mm',
+    )
+    char_card_draw.text(
+        (6, 113),
+        f'{talent_num}命',  # type: ignore
+        font=genshin_font_27,
+        fill=text_floor_color,
+        anchor='lm',
+    )
+    floor_pic.paste(
+        char_card,
+        (0 + 155 * index_char, 50 + index_part * 195),
+        char_card,
+    )
+
+
+async def _draw_floor_card(
+    level_star: int,
+    floor_pic: Image.Image,
+    bg_img: Image.Image,
+    time_str: str,
+    index_floor: int,
+):
+    star_pic = await get_abyss_star_pic(level_star)
+    floor_pic.paste(star_pic, (420, -5), star_pic)
+    floor_pic_draw = ImageDraw.Draw(floor_pic)
+    floor_pic_draw.text(
+        (31, 25),
+        time_str,
+        font=genshin_font_27,
+        fill=text_floor_color,
+        anchor='lm',
+    )
+    bg_img.paste(floor_pic, (5, 415 + index_floor * 440), floor_pic)
+
+
 async def draw_abyss_img(
     uid: str,
     floor: Optional[int] = None,
@@ -86,6 +149,8 @@ async def draw_abyss_img(
         else:
             return '你还没有挑战该层!'
     else:
+        if len(raw_abyss_data['floors']) == 0:
+            return '你还没有挑战本期深渊!\n可以使用[上期深渊]命令查询上期~'
         floors_data = raw_abyss_data['floors'][-1]
     levels_num = len(floors_data['levels'])
     if floors_data['levels'][0]['battles']:
@@ -97,9 +162,9 @@ async def draw_abyss_img(
     # 获取背景图片各项参数
     based_w = 625
     based_h = 415 if is_unfull else 415 + levels_num * 440
-    bg_img = await get_simple_bg(based_w, based_h)
-
     white_overlay = Image.new('RGBA', (based_w, based_h), (255, 255, 255, 188))
+
+    bg_img = await get_simple_bg(based_w, based_h)
     bg_img.paste(white_overlay, (0, 0), white_overlay)
 
     abyss_title = Image.new('RGBA', (625, 415), (0, 0, 0, 0))
@@ -194,6 +259,7 @@ async def draw_abyss_img(
     if is_unfull:
         pass
     else:
+        task = []
         for index_floor, level in enumerate(floors_data['levels']):
             floor_pic = Image.new('RGBA', (615, 440), (0, 0, 0, 0))
             level_star = level['star']
@@ -202,7 +268,6 @@ async def draw_abyss_img(
             time_str = time.strftime('%Y-%m-%d %H:%M:%S', time_array)
             for index_part, battle in enumerate(level['battles']):
                 for index_char, char in enumerate(battle['avatars']):
-                    char_card = Image.new('RGBA', (150, 190), (0, 0, 0, 0))
                     # 获取命座
                     if char["id"] in char_temp:
                         talent_num = char_temp[char["id"]]
@@ -214,49 +279,19 @@ async def draw_abyss_img(
                                 )
                                 char_temp[char["id"]] = talent_num
                                 break
-                    # 根据稀有度获取背景
-                    char_bg = await get_rarity_pic(char['rarity'])
-                    char_pic = (
-                        Image.open(CHAR_PATH / f'{char["id"]}.png')
-                        .convert('RGBA')
-                        .resize((150, 150), Image.Resampling.LANCZOS)  # type: ignore
+                    task.append(
+                        _draw_abyss_card(
+                            char, talent_num, floor_pic, index_char, index_part  # type: ignore
+                        )
                     )
-                    char_img = Image.new('RGBA', (150, 190), (0, 0, 0, 0))
-                    char_img.paste(char_pic, (0, 3), char_pic)
-                    char_bg = Image.alpha_composite(char_bg, char_img)
-                    char_card.paste(char_bg, (0, 0), char_mask)
-                    char_card = Image.alpha_composite(char_card, char_frame)
-                    char_card_draw = ImageDraw.Draw(char_card)
-                    char_card_draw.text(
-                        (75, 170),
-                        f'Lv.{char["level"]}',
-                        font=genshin_font_32,
-                        fill=text_floor_color,
-                        anchor='mm',
-                    )
-                    char_card_draw.text(
-                        (6, 113),
-                        f'{talent_num}命',  # type: ignore
-                        font=genshin_font_27,
-                        fill=text_floor_color,
-                        anchor='lm',
-                    )
-                    floor_pic.paste(
-                        char_card,
-                        (0 + 155 * index_char, 50 + index_part * 195),
-                        char_card,
-                    )
-            star_pic = await get_abyss_star_pic(level_star)
-            floor_pic.paste(star_pic, (420, -5), star_pic)
-            floor_pic_draw = ImageDraw.Draw(floor_pic)
-            floor_pic_draw.text(
-                (31, 25),
-                time_str,
-                font=genshin_font_27,
-                fill=text_floor_color,
-                anchor='lm',
+            await asyncio.gather(*task)
+            task.clear()
+            task.append(
+                _draw_floor_card(
+                    level_star, floor_pic, bg_img, time_str, index_floor
+                )
             )
-            bg_img.paste(floor_pic, (5, 415 + index_floor * 440), floor_pic)
+        await asyncio.gather(*task)
 
     res = await convert_img(bg_img)
     return res
