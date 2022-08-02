@@ -294,4 +294,5 @@ async def draw_abyss_img(
         await asyncio.gather(*task)
 
     res = await convert_img(bg_img)
+    logger.info('[查询深渊信息]绘图已完成,等待发送!')
     return res

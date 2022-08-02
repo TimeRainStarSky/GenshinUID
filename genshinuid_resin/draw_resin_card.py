@@ -250,4 +250,5 @@ async def draw_resin_img(uid: str):
     )
 
     res = await convert_img(img)
+    logger.info('[查询每日信息]绘图已完成,等待发送!')
     return res
