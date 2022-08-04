@@ -1,10 +1,9 @@
 from ..all_import import *
 from .add_ck import deal_ck
-from .link_id import link_uid_to_qq, link_mihoyo_id_to_qq
+from ..utils.db_operation.db_operation import bind_db, delete_db, switch_db
 
 add_cookie = on_command('添加', permission=PRIVATE_FRIEND)
-link_mys = on_command('绑定mys')
-link_uid = on_command('绑定uid')
+bind = on_regex(r'^(绑定|切换|解绑|删除)(uid|UID|mys|MYS)([0-9]+)?$')
 
 
 @add_cookie.handle()
@@ -17,21 +16,30 @@ async def send_add_ck_msg(
     await matcher.finish(im)
 
 
-# 群聊内 绑定uid 的命令，会绑定至当前qq号上
-@link_uid.handle()
-@handle_exception('绑定uid', '绑定uid异常')
+# 群聊内 绑定uid或者mysid 的命令，会绑定至当前qq号上
+@bind.handle()
+@handle_exception('绑定ID', '绑定ID异常')
 async def send_link_uid_msg(
-    event: MessageEvent, matcher: Matcher, args: Message = CommandArg()
+    event: MessageEvent, matcher: Matcher, args: Tuple[Any, ...] = RegexGroup()
 ):
-    await link_uid_to_qq(event.sender.user_id, args.extract_plain_text())  # type: ignore
-    await matcher.finish('绑定uid成功！', at_sender=True)
+    logger.info('开始执行[绑定/解绑用户信息]')
+    logger.info('[绑定/解绑]参数: {}'.format(args))
+    qid = event.sender.user_id
+    if qid is None:
+        await matcher.finish('QID为空，请重试！')
+    else:
+        qid = str(qid)
 
+    if args[0] in ('绑定'):
+        if args[2] is None:
+            await matcher.finish('请输入正确的uid或者mysid！')
 
-# 群聊内 绑定米游社通行证 的命令，会绑定至当前qq号上，和绑定uid不冲突，两者可以同时绑定
-@link_mys.handle()
-@handle_exception('绑定米游社通行证', '绑定米游社通行证异常')
-async def send_link_mysid_msg(
-    event: MessageEvent, matcher: Matcher, args: Message = CommandArg()
-):
-    await link_mihoyo_id_to_qq(event.sender.user_id, args.extract_plain_text())  # type: ignore
-    await matcher.finish('绑定米游社id成功！', at_sender=True)
+        if args[1] in ('uid', 'UID'):
+            im = await bind_db(qid, args[2])
+        else:
+            im = await bind_db(qid, None, args[2])
+    elif args[0] in ('切换'):
+        im = await switch_db(qid, args[2])
+    else:
+        im = await delete_db(qid, args[2])
+    await matcher.finish(im, at_sender=True)

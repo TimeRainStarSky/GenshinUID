@@ -1,9 +1,10 @@
 import re
+from typing import List, Union, Optional
 
 from .gsuid_db_pool import *  # noqa: F401,F403
 
 
-async def connect_db(userid, uid=None, mys=None):
+async def bind_db(userid, uid=None, mys=None):
     conn = gsuid_pool.connect()
     c = conn.cursor()
     c.execute(
@@ -15,38 +16,162 @@ async def connect_db(userid, uid=None, mys=None):
 
     c.execute(
         'INSERT OR IGNORE INTO UIDDATA (USERID,UID,MYSID) \
-    VALUES (?, ?,?)',
+    VALUES (?, ?, ?)',
         (userid, uid, mys),
     )
 
+    old_data = c.execute('SELECT * FROM UIDDATA WHERE USERID = ?', (userid,))
+    old_data = old_data.fetchall()
+
+    im = ''
     if uid:
-        c.execute('UPDATE UIDDATA SET UID = ? WHERE USERID=?', (uid, userid))
+        if old_data[0][1] is not None:
+            if uid in old_data[0][1]:
+                return '当前uid已经绑定过了!请勿重复绑定~'
+            else:
+                new_uid = f'{old_data[0][1]}_{uid}'
+        else:
+            new_uid = uid
+        c.execute(
+            'UPDATE UIDDATA SET UID = ? WHERE USERID=?', (new_uid, userid)
+        )
+        im = f'UID绑定成功!\n当前绑定uid为{new_uid}'
     if mys:
-        c.execute('UPDATE UIDDATA SET MYSID = ? WHERE USERID=?', (mys, userid))
+        if old_data[0][2] is not None:
+            new_mys = f'{old_data[0][2]}_{mys}'
+        else:
+            new_mys = mys
+        c.execute(
+            'UPDATE UIDDATA SET MYSID = ? WHERE USERID=?', (new_mys, userid)
+        )
+        im = f'米游社通行证绑定成功!\n当前绑定mysid为{new_mys}'
 
     conn.commit()
     conn.close()
+    return im
 
 
-async def select_db(userid, mode='auto'):
+async def select_db(userid, mode='auto') -> Union[List, None]:
+    """
+    :说明:
+      选择绑定uid/mys库
+    :参数:
+      * userid (str): QQ号。
+      * mode (str): 模式如下
+        * auto(默认): 自动选择(优先mys)
+        * uid: 选择uid库
+        * mys: 选择mys库
+        * list: 返回uid列表
+    :返回:
+      * data (list): 返回获取值
+      mode为list时返回uid列表
+      其他情况下data[0]为需要的uid/mysid
+      data[1]表示data[0]是`uid` or `mysid`
+    """
     conn = gsuid_pool.connect()
     c = conn.cursor()
     cursor = c.execute('SELECT *  FROM UIDDATA WHERE USERID = ?', (userid,))
-    for row in cursor:
+    c_data = cursor.fetchall()
+    for row in c_data:
+        uid = None
+        mysid = None
+        uid_list = None
+        if row[1]:
+            uid_list = row[1].split('_')
+            uid = uid_list[0]
+        if row[2]:
+            mysid_list = row[2].split('_')
+            mysid = mysid_list[0]
+
         if mode == 'auto':
-            if row[0]:
-                if row[2]:
-                    return [row[2], 3]
-                elif row[1]:
-                    return [row[1], 2]
-                else:
-                    return None
+            if mysid:
+                return [mysid, 'mys']
+            elif uid:
+                return [uid, 'uid']
             else:
                 return None
         elif mode == 'uid':
-            return [row[1], 2]
+            return [uid, 'uid']
         elif mode == 'mys':
-            return [row[2], 3]
+            return [mysid, 'mys']
+        elif mode == 'list':
+            return uid_list
+
+
+async def switch_db(userid: str, uid: Optional[str] = None):
+    """
+    :说明:
+      切换绑定的UID列表,绑定一个UID的情况下返回无法切换
+      切换前 -> 12_13_14
+      切换后 -> 13_14_12
+    :参数:
+      * userid (str): QQ号。
+    :返回:
+      * im (str): 回调信息。
+    """
+    conn = gsuid_pool.connect()
+    c = conn.cursor()
+    cursor = c.execute('SELECT *  FROM UIDDATA WHERE USERID = ?', (userid,))
+    c_data = cursor.fetchall()
+    for row in c_data:
+        if len(row[1].split('_')) <= 1:
+            return f'你只绑定了一个UID,无法进行切换~\n当前绑定UID{row[1]}!'
+        else:
+            uid_list = row[1].split('_')
+            # 根据传入uid切换
+            if uid is None:
+                uid = uid_list[1]
+
+            if uid in uid_list:
+                uid_list.remove(uid)
+                uid_list.insert(0, uid)
+            else:
+                return f'当前UID{uid}不在绑定列表中,无法切换~'
+            new_uid = '_'.join(uid_list)
+            new_uid_str = '\n'.join(uid_list)
+            c.execute(
+                'UPDATE UIDDATA SET UID = ? WHERE USERID=?', (new_uid, userid)
+            )
+            conn.commit()
+            conn.close()
+            return f'UID切换成功!\n当前绑定uid列表为\n{new_uid_str}'
+
+
+async def delete_db(userid: str, uid: Optional[str] = None):
+    """
+    :说明:
+      删除当前绑定的UID信息
+      删除前 -> 12_13_14
+      删除后 -> 13_14
+    :参数:
+      * userid (str): QQ号。
+    :返回:
+      * im (str): 回调信息。
+    """
+    conn = gsuid_pool.connect()
+    c = conn.cursor()
+    cursor = c.execute('SELECT *  FROM UIDDATA WHERE USERID = ?', (userid,))
+    c_data = cursor.fetchall()
+    for row in c_data:
+        # 首个UID被切换到最后
+        uid_list = row[1].split('_')
+        if uid:
+            if uid in uid_list:
+                delete_uid = uid
+                uid_list.remove(uid)
+            else:
+                return f'你没有绑定{uid}这个uid,无法进行删除~'
+        else:
+            delete_uid = uid_list[0]
+            uid_list.pop(0)
+        new_uid_list = '_'.join(uid_list)
+        new_uid_str = '\n'.join(uid_list)
+        c.execute(
+            'UPDATE UIDDATA SET UID = ? WHERE USERID=?', (new_uid_list, userid)
+        )
+        conn.commit()
+        conn.close()
+        return f'UID{delete_uid}已被删除!\n当前绑定uid列表为\n{new_uid_str}'
 
 
 async def cookies_db(uid, cookies, qid):

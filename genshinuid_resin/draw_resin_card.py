@@ -6,8 +6,10 @@ from typing import Tuple
 from nonebot.log import logger
 from PIL import Image, ImageDraw
 
+from ..utils.db_operation.db_operation import select_db
 from ..utils.mhy_api.get_mhy_data import get_daily_data
 from ..utils.enka_api.get_enka_data import get_enka_info
+from ..utils.message.error_reply import *  # noqa: F403,F401
 from ..utils.alias.enName_to_avatarId import enName_to_avatarId
 from ..utils.draw_image_tools.send_image_tool import convert_img
 from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
@@ -62,7 +64,31 @@ async def _draw_task_img(
     )
 
 
-async def draw_resin_img(uid: str):
+async def get_resin_img(qid: int):
+    try:
+        uid_list = await select_db(qid, mode='list')
+        logger.info('[每日信息]UID: {}'.format(uid_list))
+        task = []
+        img = Image.new(
+            'RGBA', (based_w * len(uid_list), based_h), (0, 0, 0, 0)
+        )
+        for uid_index, uid in enumerate(uid_list):
+            task.append(_draw_all_resin_img(img, uid, uid_index))
+        await asyncio.gather(*task)
+        res = await convert_img(img)
+        logger.info('[查询每日信息]绘图已完成,等待发送!')
+    except TypeError:
+        res = '查询不到该QQ号的UID信息,请联系管理员检查后台输出!'
+
+    return res
+
+
+async def _draw_all_resin_img(img: Image.Image, uid: str, index: int):
+    resin_img = await draw_resin_img(uid)
+    img.paste(resin_img, (500 * index, 0), resin_img)
+
+
+async def draw_resin_img(uid: str) -> Image.Image:
     # 获取数据
     daily_data = await get_daily_data(uid)
     daily_data = daily_data['data']
@@ -249,6 +275,4 @@ async def draw_resin_img(uid: str):
         anchor='lm',
     )
 
-    res = await convert_img(img)
-    logger.info('[查询每日信息]绘图已完成,等待发送!')
-    return res
+    return img
