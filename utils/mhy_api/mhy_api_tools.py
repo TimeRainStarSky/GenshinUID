@@ -20,7 +20,7 @@ def md5(text):
 
 def old_version_get_ds_token(mysbbs=False):
     if mysbbs:
-        n = 'fd3ykrh7o1j54g581upo1tvpam0dsgtf'
+        n = 'dWCcD2FsOUXEstC5f9xubswZxEeoBOTc'
     else:
         n = 'h8w582wxwgqvahcdkpvdhbh2w9casgfl'
     i = str(int(time.time()))
