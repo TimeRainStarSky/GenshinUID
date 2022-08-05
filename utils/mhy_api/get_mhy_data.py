@@ -140,9 +140,10 @@ async def mihoyo_bbs_sign(uid, server_id='cn_gf01') -> dict:
     )
     HEADER['Cookie'] = await owner_cookies(uid)
     HEADER['x-rpc-device_id'] = random_hex(32)
-    HEADER['x-rpc-app_version'] = '2.3.0'
+    HEADER['x-rpc-app_version'] = '2.28.1'
+    HEADER['x-rpc-client_type'] = '2'
     HEADER['X_Requested_With'] = 'com.mihoyo.hyperion'
-    HEADER['DS'] = old_version_get_ds_token()
+    HEADER['DS'] = old_version_get_ds_token(True)
     HEADER['Referer'] = (
         'https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id'
         '=e202009291139501&utm_source=bbs&utm_medium=mys&utm_campaign=icon'
