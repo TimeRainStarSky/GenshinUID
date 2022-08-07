@@ -2,7 +2,7 @@ import time
 import random
 import string
 
-from nonebot import logger
+from nonebot.log import logger
 from httpx import AsyncClient
 
 from ..utils.mhy_api.mhy_api import *

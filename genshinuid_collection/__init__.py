@@ -3,12 +3,13 @@ from .draw_collection_card import draw_collection_img
 from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.message.error_reply import *  # noqa: F403,F401
+from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
 
 get_collection_info = on_regex(
-    r'^(\[CQ:at,qq=[0-9]+\] )?'
-    r'(uid|查询|mys)?([0-9]{9})?'
+    r'^(\[CQ:at,qq=[0-9]+\])?( )?'
+    r'(uid|查询|mys)?([0-9]+)?'
     r'(收集|宝箱|sj|bx)'
-    r'(\[CQ:at,qq=[0-9]+\])?$',
+    r'(\[CQ:at,qq=[0-9]+\])?( )?$',
     block=True,
 )
 
@@ -21,26 +22,25 @@ async def send_collection_info(
     args: Tuple[Any, ...] = RegexGroup(),
     custom: ImageAndAt = Depends(),
 ):
+    logger.info('开始执行[查询收集信息]')
+    logger.info('[查询收集信息]参数: {}'.format(args))
     at = custom.get_first_at()
     if at:
         qid = at
     else:
         qid = event.user_id
 
-    if args[1] == 'mys':
-        mode = 'mys'
-    else:
-        mode = 'uid'
-
-    # 判断uid
-    if args[2] is None:
-        try:
+    if args[2] != 'mys':
+        if args[3] is None:
             uid = await select_db(qid, mode='uid')
-            uid = uid[0]
-        except TypeError:
-            await matcher.finish(UID_HINT)
+            uid = str(uid)
+        elif len(args[3]) != 9:
+            return
+        else:
+            uid = args[3]
     else:
-        uid = args[2]
+        uid = await convert_mysid(args[3])
+    logger.info('[查询收集信息]uid: {}'.format(uid))
 
     im = await draw_collection_img(uid)
     if isinstance(im, str):

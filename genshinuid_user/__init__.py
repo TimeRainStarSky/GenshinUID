@@ -27,8 +27,7 @@ async def send_link_uid_msg(
     qid = event.sender.user_id
     if qid is None:
         await matcher.finish('QID为空，请重试！')
-    else:
-        qid = str(qid)
+    logger.info('[绑定/解绑]UserID: {}'.format(qid))
 
     if args[0] in ('绑定'):
         if args[2] is None:
@@ -41,5 +40,8 @@ async def send_link_uid_msg(
     elif args[0] in ('切换'):
         im = await switch_db(qid, args[2])
     else:
-        im = await delete_db(qid, args[2])
+        if args[1] in ('uid', 'UID'):
+            im = await delete_db(qid, {'UID': args[2]})
+        else:
+            im = await delete_db(qid, {'MYSID': args[2]})
     await matcher.finish(im, at_sender=True)

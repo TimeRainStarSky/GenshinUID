@@ -1,4 +1,5 @@
 from ..all_import import *  # noqa: F403,F401
+from ..utils.db_operation.db_operation import config_check
 from .daily_mihoyo_bbs_coin import mihoyo_coin, all_daily_mihoyo_bbs_coin
 
 bbscoin_scheduler = require('nonebot_plugin_apscheduler').scheduler
@@ -48,7 +49,8 @@ async def send_daily_mihoyo_bbs_sign():
                 user_id=user_id, message=im_private[user_id]
             )
             await asyncio.sleep(5 + random.randint(1, 3))
-    for qid in SUPERUSERS:
-        await bot.call_api(api='send_private_msg', user_id=qid, message=im)
-        await asyncio.sleep(5 + random.randint(1, 3))
+    if await config_check('PrivateReport'):
+        for qid in SUPERUSERS:
+            await bot.call_api(api='send_private_msg', user_id=qid, message=im)
+            await asyncio.sleep(5 + random.randint(1, 3))
     logger.info('米游币获取已结束。')
