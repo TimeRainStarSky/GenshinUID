@@ -24,7 +24,6 @@ async def get_sign_func(
     qid = int(event.sender.user_id)  # type: ignore
     logger.info('[签到]QQ号: {}'.format(qid))
     uid = await select_db(qid, mode='uid')
-    uid: str = uid[0]
     logger.info('[签到]UID: {}'.format(uid))
     im = await sign_in(uid)
     await matcher.finish(im, at_sender=True)

@@ -125,19 +125,14 @@ async def _draw_text(
     )
 
 
-async def draw_pic(
-    uid: str,
-    mode: str = 'uid',
-):
-    # 获取Cookies
+async def draw_pic(uid: str):
+    # 获取Cookies# 获取Cookies
     data_def = GetCookies()
-    retcode = await data_def.get_useable_cookies(uid, mode)
-    if not retcode:
+    retcode = await data_def.get_useable_cookies(uid)
+    if retcode:
         return retcode
     use_cookies = data_def.useable_cookies
     raw_data = data_def.raw_data
-    if data_def.uid:
-        uid = data_def.uid
 
     # 记录数据
     if raw_data:

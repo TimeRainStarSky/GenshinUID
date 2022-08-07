@@ -97,7 +97,7 @@ async def daily_sign():
     c_data = await get_all_signin_list()
     tasks = []
     for row in c_data:
-        tasks.append(single_daily_sign(row[0], row[4], row[2]))
+        tasks.append(single_daily_sign(row['UID'], row['StatusB'], row['QID']))
         if len(tasks) >= 3:
             await asyncio.gather(*tasks)
             delay = 20 + random.randint(1, 4)

@@ -46,8 +46,7 @@ async def all_daily_mihoyo_bbs_coin():
 
 
 async def mihoyo_coin(qid, s_cookies=None):
-    uid = await select_db(qid, mode='uid')
-    uid = uid[0]
+    uid: str = await select_db(qid, mode='uid')  # type: ignore
     if s_cookies is None:
         s_cookies = await get_stoken(uid)
 

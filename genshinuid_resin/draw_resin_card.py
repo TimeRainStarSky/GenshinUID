@@ -1,7 +1,7 @@
 import json
 import asyncio
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
 from nonebot.log import logger
 from PIL import Image, ImageDraw
@@ -66,7 +66,7 @@ async def _draw_task_img(
 
 async def get_resin_img(qid: int):
     try:
-        uid_list = await select_db(qid, mode='list')
+        uid_list: List = await select_db(qid, mode='list')  # type: ignore
         logger.info('[每日信息]UID: {}'.format(uid_list))
         task = []
         img = Image.new(

@@ -114,18 +114,16 @@ async def _draw_floor_card(
 async def draw_abyss_img(
     uid: str,
     floor: Optional[int] = None,
-    mode: str = 'uid',
     schedule_type: str = '1',
 ) -> Union[bytes, str]:
+
     # 获取Cookies
     data_def = GetCookies()
-    retcode = await data_def.get_useable_cookies(uid, mode, schedule_type)
-    if not retcode:
+    retcode = await data_def.get_useable_cookies(uid)
+    if retcode:
         return retcode
     raw_data = data_def.raw_data
-    raw_abyss_data = data_def.raw_abyss_data
-    if data_def.uid:
-        uid = data_def.uid
+    raw_abyss_data = await data_def.get_spiral_abyss_data(schedule_type)
 
     # 获取数据
     if raw_abyss_data:

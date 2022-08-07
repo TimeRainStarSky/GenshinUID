@@ -4,14 +4,18 @@ from .draw_char_card import *
 from .draw_char_card import draw_char_img
 from ..all_import import *  # noqa: F401,F403
 from ..utils.enka_api.enka_to_data import enka_to_data
+from ..utils.db_operation.db_operation import get_all_uid
 from ..utils.message.error_reply import *  # noqa: F401,F403
+from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
 from ..utils.alias.alias_to_char_name import alias_to_char_name
 
 refresh = on_command('强制刷新')
 get_charcard_list = on_command('毕业度统计')
 get_char_info = on_regex(
-    r'^(\[CQ:at,qq=[0-9]+\] )?(uid|查询|mys)([0-9]{9})?'
-    r'([\u4e00-\u9fffa-zA-Z0-9]*)(\[CQ:at,qq=[0-9]+\])?$',
+    r'^(\[CQ:at,qq=[0-9]+\])?( )?'
+    r'(uid|查询|mys)([0-9]+)?'
+    r'([\u4e00-\u9fffa-zA-Z0-9]*)'
+    r'(\[CQ:at,qq=[0-9]+\])?( )?$',
     priority=2,
 )
 
@@ -37,21 +41,21 @@ async def send_char_info(
         qid = event.user_id
     logger.info('[查询角色面板]QQ: {}'.format(qid))
 
-    if args[1] == 'mys':
-        mode = 'mys'
+    if args[2] != 'mys':
+        if args[3] is None:
+            uid = await select_db(qid, mode='uid')
+            uid = str(uid)
+        elif len(args[3]) != 9:
+            return
+        else:
+            uid = args[3]
     else:
-        mode = 'uid'
+        uid = await convert_mysid(args[3])
 
-    # 判断uid
-    if args[2] is None:
-        uid = await select_db(qid, mode='uid')
-        uid = uid[0]
-    else:
-        uid = args[2]
     logger.info('[查询角色面板]uid: {}'.format(uid))
 
     player_path = PLAYER_PATH / str(uid)
-    if args[3] == '展柜角色':
+    if args[4] == '展柜角色':
         char_file_list = player_path.glob('*')
         char_list = []
         for i in char_file_list:
@@ -60,8 +64,10 @@ async def send_char_info(
                 char_list.append(file_name.split('.')[0])
         char_list_str = ','.join(char_list)
         await matcher.finish(f'UID{uid}当前缓存角色:{char_list_str}', at_sender=True)
+    elif args[4] is None:
+        return
     else:
-        char_name = await alias_to_char_name(args[3])
+        char_name = await alias_to_char_name(args[4])
         char_path = player_path / f'{char_name}.json'
         if char_path.exists():
             with open(char_path, 'r', encoding='utf8') as fp:
@@ -84,13 +90,9 @@ async def refresh_char_data():
     :说明:
       刷新全部绑定uid的角色展柜面板进入本地缓存。
     """
-    conn = sqlite3.connect('ID_DATA.db')
-    c = conn.cursor()
-    cursor = c.execute('SELECT UID  FROM UIDDATA WHERE UID IS NOT NULL')
-    c_data = cursor.fetchall()
+    uid_list = await get_all_uid()
     t = 0
-    for row in c_data:
-        uid = row[0]
+    for uid in uid_list:
         try:
             im = await enka_to_data(uid)
             logger.info(im)
@@ -101,7 +103,13 @@ async def refresh_char_data():
             logger.error(f'{uid}刷新失败！本次自动刷新结束！')
             return f'执行失败从{uid}！共刷新{str(t)}个角色！'
     else:
+        logger.info(f'共刷新{str(t)}个角色！')
         return f'执行成功！共刷新{str(t)}个角色！'
+
+
+@refresh_scheduler.scheduled_job('cron', hour='4')
+async def daily_refresh_charData():
+    await refresh_char_data()
 
 
 @refresh.handle()
@@ -128,7 +136,7 @@ async def send_card_info(
                 return
         else:
             uid = await select_db(qid, mode='uid')
-            uid = uid[0]
+            uid = str(uid)
     im = await enka_to_data(uid)
     logger.info(f'UID{uid}获取角色数据成功！')
     await matcher.finish(str(im))
@@ -155,8 +163,7 @@ async def send_charcard_list(
         message = message.replace(str(at), '')
     else:
         uid = await select_db(int(event.sender.user_id), mode='uid')  # type: ignore
-    uid = uid[0]
-    im = await draw_cahrcard_list(uid, limit)
+    im = await draw_cahrcard_list(str(uid), limit)
 
     logger.info(f'UID{uid}获取角色数据成功！')
     if isinstance(im, bytes):

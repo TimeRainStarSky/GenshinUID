@@ -1,8 +1,14 @@
 from .draw_roleinfo_card import draw_pic
 from ..all_import import *  # noqa: F403,F401
 from ..utils.db_operation.db_operation import select_db
+from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
 
-get_role_info = on_regex('^(uid|查询|mys)?([0-9]{9})?$', block=True)
+get_role_info = on_regex(
+    r'^(\[CQ:at,qq=[0-9]+\])?( )?'
+    r'(uid|查询|mys)?([0-9]+)?'
+    r'(\[CQ:at,qq=[0-9]+\])?( )?$',
+    block=True,
+)
 
 
 @get_role_info.handle()
@@ -15,11 +21,22 @@ async def send_role_info(
     logger.info('开始执行[查询角色信息]')
     logger.info('[查询角色信息]参数: {}'.format(args))
     qid = event.user_id
-    if args[1] is None:
-        uid = await select_db(qid, mode='uid')
-        uid = uid[0]
+
+    # 判断uid
+    if args[2] != 'mys':
+        if args[3] is None:
+            if args[2] is None:
+                logger.info('[查询角色信息]uid为空, 直接结束~')
+                return
+            uid = await select_db(qid, mode='uid')
+            uid = str(uid)
+        elif len(args[3]) != 9:
+            return
+        else:
+            uid = args[3]
     else:
-        uid = args[1]
+        uid = await convert_mysid(args[3])
+
     logger.info('[查询角色信息]uid: {}'.format(uid))
     im = await draw_pic(uid)
 

@@ -5,7 +5,7 @@ from nonebot.log import logger
 from aiohttp import ClientSession
 
 from .mhy_api import *
-from ..db_operation.db_operation import owner_cookies
+from ..db_operation.db_operation import cache_db, owner_cookies
 from .mhy_api_tools import (  # noqa: F401,F403
     random_hex,
     get_ds_token,
@@ -268,7 +268,7 @@ async def get_calculate_info(
     return data
 
 
-async def get_mihoyo_bbs_info(mysid: str, ck: str) -> dict:
+async def get_mihoyo_bbs_info(mysid: str, ck: Optional[str] = None) -> dict:
     """
     :说明:
       返回米游社账号对应的游戏角色信息。
@@ -282,6 +282,8 @@ async def get_mihoyo_bbs_info(mysid: str, ck: str) -> dict:
     :返回:
       * mys_data (dict): 米游社账号的游戏角色信息。
     """
+    if ck is None:
+        ck = str(await cache_db(mysid))
     HEADER = copy.deepcopy(_HEADER)
     HEADER['Cookie'] = ck
     HEADER['DS'] = get_ds_token('uid=' + mysid)
