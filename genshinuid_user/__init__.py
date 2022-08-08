@@ -1,9 +1,26 @@
 from ..all_import import *
 from .add_ck import deal_ck
+from .draw_user_card import get_user_card
 from ..utils.db_operation.db_operation import bind_db, delete_db, switch_db
 
 add_cookie = on_command('添加', permission=PRIVATE_FRIEND)
-bind = on_regex(r'^(绑定|切换|解绑|删除)(uid|UID|mys|MYS)([0-9]+)?$')
+bind_info = on_command('绑定信息', priority=2, block=True)
+bind = on_regex(r'^(绑定|切换|解绑|删除)(uid|UID|mys|MYS)([0-9]+)?$', priority=2)
+
+
+@bind_info.handle()
+async def send_bind_card(
+    event: MessageEvent, matcher: Matcher, args: Message = CommandArg()
+):
+    if args:
+        return
+    logger.info('开始执行[查询用户绑定状态]')
+    qid = event.sender.user_id
+    if qid is None:
+        await matcher.finish('QID为空，请重试！')
+    im = await get_user_card(qid)
+    logger.info('[查询用户绑定状态]完成!等待图片发送中...')
+    await matcher.finish(MessageSegment.image(im))
 
 
 @add_cookie.handle()

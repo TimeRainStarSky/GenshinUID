@@ -170,6 +170,14 @@ async def get_stoken(uid: str) -> str:
             return str(stoken)
 
 
+async def get_user_bind_data(uid: str) -> dict:
+    async with async_session() as session:  # type: ignore
+        async with session.begin():
+            Cookies = CookiesDAL(session)
+            lst = await Cookies.get_user_data_dict(uid)
+            return lst
+
+
 async def stoken_db(s_cookies: str, uid: str) -> str:
     async with async_session() as session:  # type: ignore
         async with session.begin():

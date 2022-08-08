@@ -21,6 +21,13 @@ class CookiesDAL:
         else:
             return None
 
+    async def get_user_data_dict(self, uid: str) -> dict:
+        data = await self.get_user_data(uid)
+        if data:
+            return data.__dict__
+        else:
+            return {}
+
     async def get_user_ck(self, uid: str) -> Union[Column[str], str]:
         """
         :说明:
