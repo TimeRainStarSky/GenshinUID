@@ -12,9 +12,11 @@ from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
 from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
-CHAR_PATH = Path(__file__).parents[1] / 'resource' / 'chars'
-CHAR_STAND_PATH = Path(__file__).parents[1] / 'resource' / 'char_stand'
-CHAR_SIDE_PATH = Path(__file__).parents[1] / 'resource' / 'char_side'
+RESOURCE_PATH = Path(__file__).parents[1] / 'resource'
+CHAR_PATH = RESOURCE_PATH / 'chars'
+CHAR_STAND_PATH = RESOURCE_PATH / 'char_stand'
+CHAR_SIDE_PATH = RESOURCE_PATH / 'char_side'
+TALENT_PATH = RESOURCE_PATH / 'texture2d' / 'talent'
 
 abyss_title_pic = Image.open(TEXT_PATH / 'abyss_title.png')
 char_mask = Image.open(TEXT_PATH / 'char_mask.png')
@@ -36,6 +38,10 @@ async def get_abyss_star_pic(star: int) -> Image.Image:
 async def get_rarity_pic(rarity: int) -> Image.Image:
     rarity_pic = Image.open(TEXT_PATH / f'rarity{rarity}.png')
     return rarity_pic
+
+
+async def get_talent_pic(talent: int) -> Image.Image:
+    return Image.open(TALENT_PATH / f'talent_{talent}.png')
 
 
 async def get_rank_data(data: dict, path: Path):
@@ -69,17 +75,12 @@ async def _draw_abyss_card(
     char_bg = Image.alpha_composite(char_bg, char_img)
     char_card.paste(char_bg, (0, 0), char_mask)
     char_card = Image.alpha_composite(char_card, char_frame)
+    talent_pic = await get_talent_pic(int(talent_num))
+    char_card.paste(talent_pic, (83, 156), talent_pic)
     char_card_draw = ImageDraw.Draw(char_card)
     char_card_draw.text(
-        (75, 170),
+        (9, 172),
         f'Lv.{char["level"]}',
-        font=genshin_font_32,
-        fill=text_floor_color,
-        anchor='mm',
-    )
-    char_card_draw.text(
-        (6, 113),
-        f'{talent_num}命',  # type: ignore
         font=genshin_font_27,
         fill=text_floor_color,
         anchor='lm',

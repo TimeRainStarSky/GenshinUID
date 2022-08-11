@@ -19,6 +19,8 @@ group_msg_list = {}
 async def sign_in(uid) -> str:
     logger.info(f'[签到] {uid} 开始执行签到')
     sign_data = await mihoyo_bbs_sign(uid=uid)
+    print(sign_data)
+    logger.debug(sign_data)
     if sign_data:
         sign_info = await get_sign_info(uid)
         sign_info = sign_info['data']
@@ -98,9 +100,9 @@ async def daily_sign():
     tasks = []
     for row in c_data:
         tasks.append(single_daily_sign(row['UID'], row['StatusB'], row['QID']))
-        if len(tasks) >= 3:
+        if len(tasks) >= 1:
             await asyncio.gather(*tasks)
-            delay = 20 + random.randint(1, 4)
+            delay = 30 + random.randint(2, 8)
             logger.info(f'[签到] 已签到{len(tasks)}个用户, 等待{delay}秒进行下一次签到')
             tasks.clear()
             await asyncio.sleep(delay)

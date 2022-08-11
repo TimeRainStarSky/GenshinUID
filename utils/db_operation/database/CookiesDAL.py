@@ -162,7 +162,7 @@ class CookiesDAL:
             sql = (
                 update(NewCookiesTable)
                 .where(NewCookiesTable.UID == uid)
-                .values(cookies=cookies)
+                .values(Cookies=cookies)
             )
             await self.db_session.execute(sql)  # type: ignore
         else:

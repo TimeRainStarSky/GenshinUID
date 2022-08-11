@@ -1,51 +1,60 @@
-import re
+from http.cookies import SimpleCookie
 
 from ..utils.db_operation.db_cache_and_check import refresh_ck
+from ..utils.db_operation.db_operation import select_db, stoken_db, cookies_db
 from ..utils.mhy_api.get_mhy_data import (
     get_mihoyo_bbs_info,
     get_stoken_by_login_ticket,
 )
-from ..utils.db_operation.db_operation import (
-    select_db,
-    stoken_db,
-    cookies_db,
-    owner_cookies,
-)
 
 
 async def deal_ck(mes, qid):
-    if 'stoken' in mes:
-        login_ticket = (
-            re.search(r'login_ticket=([0-9a-zA-Z]+)', mes)
-            .group(0)  # type: ignore
-            .split('=')[1]
-        )
-        uid = await select_db(qid, 'uid')
-        ck = await owner_cookies(uid[0])
-        mys_id = re.search(r'account_id=(\d*)', ck).group(0).split('=')[1]  # type: ignore
-        raw_data = await get_stoken_by_login_ticket(login_ticket, mys_id)
-        stoken = raw_data['data']['list'][0]['token']
-        s_cookies = 'stuid={};stoken={}'.format(mys_id, stoken)
-        await stoken_db(s_cookies, uid[0])
-        return '添加Stoken成功！'
+    simp_dict = SimpleCookie(mes)
+    uid = await select_db(qid, 'uid')
+    if isinstance(uid, str):
+        pass
     else:
-        aid = re.search(r'account_id=(\d*)', mes)
-        mysid_data = aid.group(0).split('=')  # type: ignore
-        mysid = mysid_data[1]
-        cookie = ';'.join(
-            filter(
-                lambda x: x.split('=')[0] in ['cookie_token', 'account_id'],
-                [i.strip() for i in mes.split(';')],
-            )
+        return '该用户没有绑定过UID噢~'
+    im_list = []
+    if 'cookie_token' in simp_dict:
+        # 寻找uid
+        account_id = simp_dict['account_id'].value
+        cookie_token = simp_dict['cookie_token'].value
+        account_cookie = f'account_id={account_id};cookie_token={cookie_token}'
+    elif 'login_ticket' in simp_dict:
+        # 寻找stoken
+        login_ticket = simp_dict['login_ticket'].value
+        account_id = simp_dict['login_uid'].value
+        stoken_data = await get_stoken_by_login_ticket(
+            login_ticket, account_id
         )
-        mys_data = await get_mihoyo_bbs_info(mysid, cookie)
-        for i in mys_data['data']['list']:
-            if i['game_id'] != 2:
-                mys_data['data']['list'].remove(i)
-        uid = mys_data['data']['list'][0]['game_role_id']
-        await refresh_ck(uid, mysid)
-        await cookies_db(uid, cookie, qid)
-        return (
-            f'添加Cookies成功！\nCookies属于个人重要信息，如果你是在不知情的情况下添加，请马上修改米游社账户密码，保护个人隐私！\n————\n'
-            f'如果需要【gs开启自动签到】和【gs开启推送】还需要在【群聊中】使用命令“绑定uid”绑定你的uid。\n例如：绑定uid123456789。'
+        stoken = stoken_data['data']['list'][0]['token']
+        cookie_token = stoken_data['data']['list'][1]['token']
+        app_cookie = f'stuid={account_id};stoken={stoken}'
+        await stoken_db(app_cookie, uid)
+        im_list.append(f'添加Stoken成功，stuid={account_id}，stoken={stoken}')
+        account_cookie = (
+            f'ltuid={account_id};ltoken={cookie_token};{app_cookie}'
         )
+    else:
+        return '添加Cookies失败!Cookies中应该包含cookie_token或者login_ticket相关信息！\n可以尝试退出米游社登陆重新登陆获取！'
+    mys_data = await get_mihoyo_bbs_info(account_id, account_cookie)
+    # 剔除除了原神之外的其他游戏
+    for i in mys_data['data']['list']:
+        if i['game_id'] == 2:
+            uid = i['game_role_id']
+            break
+    else:
+        return f'你的米游社账号{account_id}尚未绑定原神账号，请前往米游社操作！'
+    await refresh_ck(uid, account_id)
+    await cookies_db(uid, account_cookie, qid)
+    im_list.append(
+        f'添加Cookies成功，account_id={account_id}，cookie_token={cookie_token}'
+    )
+    im_list.append(
+        'Cookies和Stoken属于个人重要信息，如果你是在不知情的情况下添加，请马上修改米游社账户密码，保护个人隐私！'
+    )
+    im_list.append(
+        f'如果需要【gs开启自动签到】和【gs开启推送】还需要在【群聊中】使用命令“绑定uid”绑定你的uid。\n例如：绑定uid123456789。'
+    )
+    return '\n'.join(im_list)

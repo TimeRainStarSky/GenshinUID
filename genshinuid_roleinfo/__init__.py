@@ -17,10 +17,15 @@ async def send_role_info(
     event: Union[GroupMessageEvent, PrivateMessageEvent],
     matcher: Matcher,
     args: Tuple[Any, ...] = RegexGroup(),
+    custom: ImageAndAt = Depends(),
 ):
     logger.info('开始执行[查询角色信息]')
     logger.info('[查询角色信息]参数: {}'.format(args))
     qid = event.user_id
+
+    at = custom.get_first_at()
+    if at:
+        qid = at
 
     # 判断uid
     if args[2] != 'mys':

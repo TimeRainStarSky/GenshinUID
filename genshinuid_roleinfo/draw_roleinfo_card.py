@@ -108,20 +108,8 @@ async def _draw_char_full_pic(img: Image.Image, char_data: dict, index: int):
     result.paste(char_card_img, (0, 0), char_card_mask)
     img.paste(
         result,
-        (15 + (index % 4) * 265, 1114 + (index // 4) * 160),
+        (15 + (index % 4) * 265, 1414 + (index // 4) * 160),
         result,
-    )
-
-
-async def _draw_text(
-    text_draw: ImageDraw.ImageDraw, text: str, pos: Tuple[int, int]
-):
-    text_draw.text(
-        pos,
-        text,
-        text_color,
-        gs_font_40,
-        anchor='lm',
     )
 
 
@@ -172,16 +160,16 @@ async def draw_pic(uid: str):
     # 获取背景图片各项参数
     based_w = 1080
     if char_num > 8:
-        based_h = 1080 + char_hang * 160 + 50
+        based_h = 1380 + char_hang * 160 + 50
     else:
-        based_h = 1080 + char_hang * 260 + 50
+        based_h = 1380 + char_hang * 260 + 50
     img = await get_simple_bg(based_w, based_h)
     white_overlay = Image.new('RGBA', (based_w, based_h), (255, 251, 242, 211))
     img.paste(white_overlay, (0, 0), white_overlay)
     char_import = Image.open(
         CHAR_STAND_PATH / f'{char_datas[0]["id"]}.png'
     ).convert('RGBA')
-    img.paste(char_import, (-529, -348), char_import)
+    img.paste(char_import, (-450, -90), char_import)
     img.paste(role_info_fg, (0, 0), role_info_fg)
 
     # 绘制基础信息文字
@@ -223,128 +211,33 @@ async def draw_pic(uid: str):
     )
 
     # 世界探索
+    world_exp = raw_data['world_explorations']
+    world_exp.sort(key=lambda x: (-x['id']), reverse=True)
+    world_exp[5][
+        'exploration_percentage'
+    ] = f'{world_exp[5]["exploration_percentage"] / 10}%/{world_exp[6]["exploration_percentage"] / 10}%'
+    world_exp.pop(6)
+    world_exp.append(
+        {'id': 500, 'number': raw_data['stats']['common_chest_number']}
+    )
+    world_exp.append(
+        {'id': 501, 'number': raw_data['stats']['exquisite_chest_number']}
+    )
+    world_exp.append(
+        {'id': 502, 'number': raw_data['stats']['precious_chest_number']}
+    )
+    world_exp.append(
+        {'id': 503, 'number': raw_data['stats']['luxurious_chest_number']}
+    )
+    world_exp.append(
+        {'id': 504, 'number': raw_data['stats']['magic_chest_number']}
+    )
+    world_exp.append(
+        {'id': 505, 'number': raw_data['stats']['way_point_number']}
+    )
     task = []
-    for world in raw_data['world_explorations']:
-        # 渊下宫
-        if world['id'] == 5:
-            # 探索
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'{world["exploration_percentage"] / 10}%',
-                    (872, 886),
-                )
-            )
-        # 层岩巨渊
-        elif world['id'] == 6:
-            # 地上探索
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'{world["exploration_percentage"] / 10}%',
-                    (519, 886),
-                )
-            )
-            world_level = await get_level_pic(world["offerings"][0]["level"])
-            img.paste(world_level, (381, 890), world_level)
-        # 地下矿区
-        elif world['id'] == 7:
-            # 地下探索
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'{world["exploration_percentage"] / 10}%',
-                    (519, 921),
-                )
-            )
-        # 稻妻
-        elif world['id'] == 4:
-            # 探索
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'{world["exploration_percentage"] / 10}%',
-                    (872, 721),
-                )
-            )
-            world_level = await get_level_pic(world["level"])
-            img.paste(world_level, (734, 725), world_level)
-            '''
-            # 神樱
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'Lv.{world["offerings"][0]["level"]}',
-                    (937, 702),
-                )
-            )
-            '''
-            '''
-            # 雷神瞳
-            task.append(
-                _draw_text(
-                    text_draw,
-                    str(raw_data['stats']['electroculus_number']),
-                    (960, 727),
-                )
-            )
-            '''
-        # 雪山
-        elif world['id'] == 3:
-            # 探索
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'{world["exploration_percentage"] / 10}%',
-                    (166, 886),
-                )
-            )
-            world_level = await get_level_pic(world["level"])
-            img.paste(world_level, (28, 890), world_level)
-        # 璃月
-        elif world['id'] == 2:
-            # 探索
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'{world["exploration_percentage"] / 10}%',
-                    (519, 721),
-                )
-            )
-            world_level = await get_level_pic(world["level"])
-            img.paste(world_level, (381, 725), world_level)
-            '''
-            # 岩神瞳
-            task.append(
-                _draw_text(
-                    text_draw,
-                    str(raw_data['stats']['geoculus_number']),
-                    (602, 735),
-                )
-            )
-            '''
-        # 蒙德
-        elif world['id'] == 1:
-            # 探索
-            task.append(
-                _draw_text(
-                    text_draw,
-                    f'{world["exploration_percentage"] / 10}%',
-                    (166, 721),
-                )
-            )
-            world_level = await get_level_pic(world["level"])
-            img.paste(world_level, (28, 725), world_level)
-            # 风神瞳
-            '''
-            task.append(
-                _draw_text(
-                    text_draw,
-                    str(raw_data['stats']['anemoculus_number']),
-                    (253, 735),
-                )
-            )
-            '''
+    for world_index, world in enumerate(world_exp):
+        task.append(_draw_world_exp_pic(img, text_draw, world, world_index))
     await asyncio.gather(*task)
 
     tasks = []
@@ -371,6 +264,66 @@ async def draw_pic(uid: str):
     res = await convert_img(img)
     logger.info('[查询角色信息]绘图已完成,等待发送!')
     return res
+
+
+async def _draw_world_exp_pic(
+    img: Image.Image,
+    text_draw: ImageDraw.ImageDraw,
+    world: dict,
+    world_index: int,
+):
+    offset_x = 360
+    offset_y = 171
+    if 'number' in world:
+        world_exp_text = f'{world["number"]}'
+        world['offerings'] = []
+    else:
+        if isinstance(world['exploration_percentage'], str):
+            world_exp_text = world['exploration_percentage']
+        else:
+            world_exp_text = f'{world["exploration_percentage"] / 10}%'
+    text_draw.text(
+        (
+            165 + world_index % 3 * offset_x,
+            728 + world_index // 3 * offset_y,
+        ),
+        world_exp_text,
+        text_color,
+        gs_font_40,
+        anchor='lm',
+    )
+    for offering_index, offering in enumerate(world['offerings']):
+        if offering['level'] <= 12:
+            level_img = await get_level_pic(offering['level'])
+            img.paste(
+                level_img,
+                (
+                    40 + world_index % 3 * offset_x,
+                    650 + world_index // 3 * offset_y + offering_index * 20,
+                ),
+                level_img,
+            )
+        else:
+            text_draw.text(
+                (
+                    70 + world_index % 3 * offset_x,
+                    713 + world_index // 3 * offset_y,
+                ),
+                str(offering['level']),
+                text_color,
+                gs_font_40,
+                anchor='mm',
+            )
+            text_draw.text(
+                (
+                    70 + world_index % 3 * offset_x,
+                    749 + world_index // 3 * offset_y,
+                ),
+                offering['name'][:2],
+                (254, 243, 231),
+                gs_font_23,
+                anchor='mm',
+            )
 
 
 async def _draw_char_8_pic(img: Image.Image, char_data: dict, index: int):
