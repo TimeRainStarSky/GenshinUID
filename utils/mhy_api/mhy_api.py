@@ -1,7 +1,7 @@
 OLD_URL = 'https://api-takumi.mihoyo.com'
 NEW_URL = 'https://api-takumi-record.mihoyo.com'
 BBS_URL = 'https://bbs-api.mihoyo.com'
-HK4_URL = 'https://hk4-api.mihoyo.com'
+HK4_URL = 'https://hk4e-api.mihoyo.com'
 
 BBS_TASKLIST = BBS_URL + '/apihub/sapi/getUserMissionsState'
 

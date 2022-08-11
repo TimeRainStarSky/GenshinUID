@@ -174,7 +174,7 @@ async def get_award(uid, server_id='cn_gf01') -> dict:
             'bind_uid': uid,
             'month': '0',
             'bbs_presentation_style': 'fullscreen',
-            'bbs_auth_required': True,
+            'bbs_auth_required': 'true',
             'utm_source': 'bbs',
             'utm_medium': 'mys',
             'utm_campaign': 'icon',
