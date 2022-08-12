@@ -4,6 +4,7 @@ from ..utils.db_operation.db_cache_and_check import refresh_ck
 from ..utils.db_operation.db_operation import select_db, stoken_db, cookies_db
 from ..utils.mhy_api.get_mhy_data import (
     get_mihoyo_bbs_info,
+    get_cookie_token_by_stoken,
     get_stoken_by_login_ticket,
 )
 
@@ -20,7 +21,6 @@ async def deal_ck(mes, qid):
         # 寻找uid
         account_id = simp_dict['account_id'].value
         cookie_token = simp_dict['cookie_token'].value
-        account_cookie = f'account_id={account_id};cookie_token={cookie_token}'
     elif 'login_ticket' in simp_dict:
         # 寻找stoken
         login_ticket = simp_dict['login_ticket'].value
@@ -29,15 +29,16 @@ async def deal_ck(mes, qid):
             login_ticket, account_id
         )
         stoken = stoken_data['data']['list'][0]['token']
-        cookie_token = stoken_data['data']['list'][1]['token']
         app_cookie = f'stuid={account_id};stoken={stoken}'
         await stoken_db(app_cookie, uid)
         im_list.append(f'添加Stoken成功，stuid={account_id}，stoken={stoken}')
-        account_cookie = (
-            f'ltuid={account_id};ltoken={cookie_token};{app_cookie}'
+        cookie_token_data = await get_cookie_token_by_stoken(
+            stoken, account_id
         )
+        cookie_token = cookie_token_data['data']['cookie_token']
     else:
         return '添加Cookies失败!Cookies中应该包含cookie_token或者login_ticket相关信息！\n可以尝试退出米游社登陆重新登陆获取！'
+    account_cookie = f'account_id={account_id};cookie_token={cookie_token}'
     mys_data = await get_mihoyo_bbs_info(account_id, account_cookie)
     # 剔除除了原神之外的其他游戏
     for i in mys_data['data']['list']:
@@ -57,4 +58,5 @@ async def deal_ck(mes, qid):
     im_list.append(
         f'如果需要【gs开启自动签到】和【gs开启推送】还需要在【群聊中】使用命令“绑定uid”绑定你的uid。\n例如：绑定uid123456789。'
     )
+    im_list.append(f'你可以使用命令【绑定信息】检查你的账号绑定情况！')
     return '\n'.join(im_list)

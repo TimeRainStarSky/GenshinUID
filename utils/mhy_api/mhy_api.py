@@ -8,6 +8,7 @@ BBS_TASKLIST = BBS_URL + '/apihub/sapi/getUserMissionsState'
 '''账号相关'''
 # 通过LoginTicket获取Stoken
 GET_STOKEN_URL = OLD_URL + '/auth/api/getMultiTokenByLoginTicket'
+GET_COOKIE_TOKEN_URL = OLD_URL + '/auth/api/getCookieAccountInfoBySToken'
 
 '''米游社相关'''
 # 获取签到列表

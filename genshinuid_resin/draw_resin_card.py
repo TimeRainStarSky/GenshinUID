@@ -6,7 +6,6 @@ from typing import List, Tuple
 from nonebot.log import logger
 from PIL import Image, ImageDraw
 
-from ..utils.db_operation.db_operation import select_db
 from ..utils.mhy_api.get_mhy_data import get_daily_data
 from ..utils.enka_api.get_enka_data import get_enka_info
 from ..utils.message.error_reply import *  # noqa: F403,F401
@@ -14,6 +13,7 @@ from ..utils.alias.enName_to_avatarId import enName_to_avatarId
 from ..utils.draw_image_tools.send_image_tool import convert_img
 from ..utils.draw_image_tools.draw_image_tool import get_simple_bg
 from ..utils.genshin_fonts.genshin_fonts import genshin_font_origin
+from ..utils.db_operation.db_operation import select_db, owner_cookies
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
 CHAR_SIDE_PATH = Path(__file__).parents[1] / 'resource' / 'char_side'
@@ -68,11 +68,19 @@ async def get_resin_img(qid: int):
     try:
         uid_list: List = await select_db(qid, mode='list')  # type: ignore
         logger.info('[每日信息]UID: {}'.format(uid_list))
+        # 进行校验UID是否绑定CK
+        useable_uid_list = []
+        for uid in uid_list:
+            status = await owner_cookies(uid)
+            if status != '该用户没有绑定过Cookies噢~':
+                useable_uid_list.append(uid)
+        logger.info('[每日信息]可用UID: {}'.format(uid_list))
+        # 开始绘图任务
         task = []
         img = Image.new(
-            'RGBA', (based_w * len(uid_list), based_h), (0, 0, 0, 0)
+            'RGBA', (based_w * len(useable_uid_list), based_h), (0, 0, 0, 0)
         )
-        for uid_index, uid in enumerate(uid_list):
+        for uid_index, uid in enumerate(useable_uid_list):
             task.append(_draw_all_resin_img(img, uid, uid_index))
         await asyncio.gather(*task)
         res = await convert_img(img)

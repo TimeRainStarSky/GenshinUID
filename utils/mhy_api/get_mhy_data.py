@@ -90,6 +90,21 @@ async def get_stoken_by_login_ticket(loginticket: str, mys_id: str) -> dict:
     return data
 
 
+async def get_cookie_token_by_stoken(stoken: str, mys_id: str) -> dict:
+    HEADER = copy.deepcopy(_HEADER)
+    HEADER['Cookie'] = f'stuid={mys_id};stoken={stoken}'
+    data = await _mhy_request(
+        url=GET_COOKIE_TOKEN_URL,
+        method='get',
+        header=HEADER,
+        params={
+            'stoken': stoken,
+            'uid': mys_id,
+        },
+    )
+    return data
+
+
 async def get_daily_data(uid: str, server_id: str = 'cn_gf01') -> dict:
     if uid[0] == '5':
         server_id = 'cn_qd01'
