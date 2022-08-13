@@ -10,7 +10,12 @@ change_map = on_command('切换地图', block=True)
 find_map = on_regex(r'^(.*)(在哪里|在哪|哪里有|在哪儿)$', priority=2)
 
 MAP_DATA = Path(__file__).parent / 'map_data'
-MAP_ID_LIST = [MapID.teyvat, MapID.chasm, MapID.enkanomiya]
+MAP_ID_LIST = [
+    MapID.teyvat,
+    MapID.chasm,
+    MapID.enkanomiya,
+    MapID.golden_apple_archipelago,
+]
 
 
 @change_map.handle()
