@@ -2,7 +2,7 @@ import math
 import random
 from io import BytesIO
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Union
 
 from PIL import Image
 from httpx import get
@@ -11,10 +11,13 @@ BG_PATH = Path(__file__).parent / 'bg'
 
 
 async def get_simple_bg(
-    based_w: int, based_h: int, image: Optional[str] = None
+    based_w: int, based_h: int, image: Union[str, None, Image.Image] = None
 ) -> Image.Image:
     if image:
-        edit_bg = Image.open(BytesIO(get(image).content)).convert('RGBA')
+        if isinstance(image, str):
+            edit_bg = Image.open(BytesIO(get(image).content)).convert('RGBA')
+        elif isinstance(image, Image.Image):
+            edit_bg = image.convert('RGBA')
     else:
         bg_path = random.choice(list(BG_PATH.iterdir()))
         edit_bg = Image.open(bg_path).convert('RGBA')

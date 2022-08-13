@@ -213,28 +213,27 @@ async def draw_pic(uid: str):
     # 世界探索
     world_exp = raw_data['world_explorations']
     world_exp.sort(key=lambda x: (-x['id']), reverse=True)
-    world_exp[5][
-        'exploration_percentage'
-    ] = f'{world_exp[5]["exploration_percentage"] / 10}%/{world_exp[6]["exploration_percentage"] / 10}%'
-    world_exp.pop(6)
-    world_exp.append(
-        {'id': 500, 'number': raw_data['stats']['common_chest_number']}
-    )
-    world_exp.append(
-        {'id': 501, 'number': raw_data['stats']['exquisite_chest_number']}
-    )
-    world_exp.append(
-        {'id': 502, 'number': raw_data['stats']['precious_chest_number']}
-    )
-    world_exp.append(
-        {'id': 503, 'number': raw_data['stats']['luxurious_chest_number']}
-    )
-    world_exp.append(
-        {'id': 504, 'number': raw_data['stats']['magic_chest_number']}
-    )
-    world_exp.append(
-        {'id': 505, 'number': raw_data['stats']['way_point_number']}
-    )
+    if len(world_exp) >= 6:
+        world_exp[5][
+            'exploration_percentage'
+        ] = f'{world_exp[5]["exploration_percentage"] / 10}%/{world_exp[6]["exploration_percentage"] / 10}%'
+        world_exp.pop(6)
+    # 添加宝箱信息和锚点
+    chest_data = [
+        'common_chest_number',
+        'exquisite_chest_number',
+        'precious_chest_number',
+        'luxurious_chest_number',
+        'magic_chest_number',
+        'way_point_number',
+    ]
+    for status_index, status in enumerate(chest_data):
+        world_exp.append(
+            {
+                'id': 500 + status_index,
+                'number': raw_data['stats'][f'{status}_chest_number'],
+            }
+        )
     task = []
     for world_index, world in enumerate(world_exp):
         task.append(_draw_world_exp_pic(img, text_draw, world, world_index))
@@ -402,6 +401,6 @@ async def _draw_char_8_pic(img: Image.Image, char_data: dict, index: int):
     result.paste(char_card_img, (0, 0), char_card8_mask)
     img.paste(
         result,
-        (15 + (index % 2) * 520, 1114 + (index // 2) * 250),
+        (15 + (index % 2) * 520, 1414 + (index // 2) * 250),
         result,
     )
