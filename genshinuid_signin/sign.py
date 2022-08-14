@@ -18,11 +18,11 @@ group_msg_list = {}
 # 签到函数
 async def sign_in(uid) -> str:
     logger.info(f'[签到] {uid} 开始执行签到')
+    sign_info = await get_sign_info(uid)
     sign_data = await mihoyo_bbs_sign(uid=uid)
     print(sign_data)
     logger.debug(sign_data)
     if sign_data:
-        sign_info = await get_sign_info(uid)
         sign_info = sign_info['data']
         sign_list = await get_sign_list()
         status = sign_data['message']

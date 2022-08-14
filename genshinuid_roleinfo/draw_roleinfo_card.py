@@ -39,6 +39,7 @@ char_card8_mask = Image.open(TEXT_PATH / 'char_card8_mask.png')
 # 生成几个字号
 gs_font_16 = genshin_font_origin(16)
 gs_font_23 = genshin_font_origin(23)
+gs_font_28 = genshin_font_origin(28)
 gs_font_40 = genshin_font_origin(40)
 
 # 文字颜色
@@ -108,7 +109,7 @@ async def _draw_char_full_pic(img: Image.Image, char_data: dict, index: int):
     result.paste(char_card_img, (0, 0), char_card_mask)
     img.paste(
         result,
-        (15 + (index % 4) * 265, 1414 + (index // 4) * 160),
+        (15 + (index % 4) * 265, 1199 + (index // 4) * 160),
         result,
     )
 
@@ -160,23 +161,21 @@ async def draw_pic(uid: str):
     # 获取背景图片各项参数
     based_w = 1080
     if char_num > 8:
-        based_h = 1380 + char_hang * 160 + 50
+        based_h = 1165 + char_hang * 160 + 50
     else:
-        based_h = 1380 + char_hang * 260 + 50
+        based_h = 1165 + char_hang * 260 + 50
     img = await get_simple_bg(based_w, based_h)
     white_overlay = Image.new('RGBA', (based_w, based_h), (255, 251, 242, 211))
     img.paste(white_overlay, (0, 0), white_overlay)
     char_import = Image.open(
         CHAR_STAND_PATH / f'{char_datas[0]["id"]}.png'
     ).convert('RGBA')
-    img.paste(char_import, (-450, -90), char_import)
+    img.paste(char_import, (-540, -180), char_import)
     img.paste(role_info_fg, (0, 0), role_info_fg)
 
     # 绘制基础信息文字
     text_draw = ImageDraw.Draw(img)
-    # text_draw.text(
-    #    (382, 1045), f'UID{uid}', text_color, gs_font_40, anchor='lm'
-    # )
+    text_draw.text((65, 468), f'UID{uid}', text_color, gs_font_40, anchor='lm')
     # 已获角色
     text_draw.text(
         (1024, 569),
@@ -212,30 +211,53 @@ async def draw_pic(uid: str):
 
     # 世界探索
     world_exp = raw_data['world_explorations']
-    world_exp.sort(key=lambda x: (-x['id']), reverse=True)
-    if len(world_exp) >= 6:
-        world_exp[5][
-            'exploration_percentage'
-        ] = f'{world_exp[5]["exploration_percentage"] / 10}%/{world_exp[6]["exploration_percentage"] / 10}%'
-        world_exp.pop(6)
+    world_list = []
+    # 须弥占坑 & 城市补足
+    for city_index in range(1, 9):
+        world_list.append(
+            {
+                'id': city_index,
+                'exp': ['0.0%'],
+                'extra': [{'name': '等阶', 'level': 0}],
+            }
+        )
+    for world_part in world_exp:
+        # 添加探索值
+        temp = {
+            'id': world_part['id'],
+            'exp': [f'{world_part["exploration_percentage"] / 10}%'],
+            'extra': [{'name': '等阶', 'level': world_part['level']}],
+        }
+        # 添加属性值
+        for offering in world_part['offerings']:
+            temp['extra'].append(
+                {'name': offering['name'], 'level': offering['level']}
+            )
+        world_list[world_part['id'] - 1] = temp
+    world_list.sort(key=lambda x: (-x['id']), reverse=True)
+    # 令层岩地下和地上合并
+    world_list[5]['exp'].append(world_list[6]['exp'][0])
+    # 移除地下
+    world_list.pop(6)
     # 添加宝箱信息和锚点
     chest_data = [
+        'magic_chest_number',
         'common_chest_number',
         'exquisite_chest_number',
         'precious_chest_number',
         'luxurious_chest_number',
-        'magic_chest_number',
-        'way_point_number',
+        # 'way_point_number',
     ]
     for status_index, status in enumerate(chest_data):
-        world_exp.append(
+        world_list.append(
             {
                 'id': 500 + status_index,
-                'number': raw_data['stats'][f'{status}_chest_number'],
+                'exp': [str(raw_data['stats'][status])],
+                'extra': [],
             }
         )
     task = []
-    for world_index, world in enumerate(world_exp):
+    for world_index, world in enumerate(world_list):
         task.append(_draw_world_exp_pic(img, text_draw, world, world_index))
     await asyncio.gather(*task)
 
@@ -271,57 +293,43 @@ async def _draw_world_exp_pic(
     world: dict,
     world_index: int,
 ):
-    offset_x = 360
+    offset_x = 258
     offset_y = 171
-    if 'number' in world:
-        world_exp_text = f'{world["number"]}'
-        world['offerings'] = []
-    else:
-        if isinstance(world['exploration_percentage'], str):
-            world_exp_text = world['exploration_percentage']
-        else:
-            world_exp_text = f'{world["exploration_percentage"] / 10}%'
-    text_draw.text(
-        (
-            165 + world_index % 3 * offset_x,
-            728 + world_index // 3 * offset_y,
-        ),
-        world_exp_text,
-        text_color,
-        gs_font_40,
-        anchor='lm',
-    )
-    for offering_index, offering in enumerate(world['offerings']):
-        if offering['level'] <= 12:
-            level_img = await get_level_pic(offering['level'])
+    for world_exp_index, world_exp in enumerate(world['exp']):
+        text_draw.text(
+            (
+                260 + world_index % 4 * offset_x,
+                700 + world_index // 4 * offset_y + world_exp_index * 28,
+            ),
+            world_exp,
+            text_color,
+            gs_font_28,
+            anchor='rm',
+        )
+    for offering_index, offering in enumerate(world['extra']):
+        if offering["name"] == "等阶":
+            level_pic = await get_level_pic(offering["level"])
             img.paste(
-                level_img,
+                level_pic,
                 (
-                    40 + world_index % 3 * offset_x,
-                    650 + world_index // 3 * offset_y + offering_index * 20,
+                    199 + world_index % 4 * offset_x,
+                    650 + world_index // 4 * offset_y,
                 ),
-                level_img,
+                level_pic,
             )
         else:
             text_draw.text(
                 (
-                    70 + world_index % 3 * offset_x,
-                    713 + world_index // 3 * offset_y,
+                    260 + world_index % 4 * offset_x,
+                    (len(world['exp']) - 1) * 28
+                    + 711
+                    + world_index // 4 * offset_y
+                    + offering_index * 23,
                 ),
-                str(offering['level']),
+                f'{str(offering["name"])}:{str(offering["level"])}',
                 text_color,
-                gs_font_40,
-                anchor='mm',
-            )
-            text_draw.text(
-                (
-                    70 + world_index % 3 * offset_x,
-                    749 + world_index // 3 * offset_y,
-                ),
-                offering['name'][:2],
-                (254, 243, 231),
                 gs_font_23,
-                anchor='mm',
+                anchor='rm',
             )
 
 
@@ -355,7 +363,7 @@ async def _draw_char_8_pic(img: Image.Image, char_data: dict, index: int):
     talent_pic = await get_talent_pic(char_data['actived_constellation_num'])
     weapon_bg_pic = await get_weapon_pic(char_data['weapon']['rarity'])
     char_card_img.paste(fetter_pic, (355, 27), fetter_pic)
-    char_card_img.paste(talent_pic, (440, 27), talent_pic)
+    char_card_img.paste(talent_pic, (435, 24), talent_pic)
     char_card_img.paste(weapon_bg_pic, (21, 158), weapon_bg_pic)
     char_card_img.paste(weapon_pic_scale, (21, 158), weapon_pic_scale)
     for equip_index, equip in enumerate(char_data['reliquaries']):
@@ -401,6 +409,6 @@ async def _draw_char_8_pic(img: Image.Image, char_data: dict, index: int):
     result.paste(char_card_img, (0, 0), char_card8_mask)
     img.paste(
         result,
-        (15 + (index % 2) * 520, 1414 + (index // 2) * 250),
+        (15 + (index % 2) * 520, 1199 + (index // 2) * 250),
         result,
     )
