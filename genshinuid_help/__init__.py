@@ -1,12 +1,10 @@
 from ..all_import import *  # noqa: F403,F401
 
-get_help = on_command('gs帮助')
-
 HELP_IMG = Path(__file__).parent / 'help.png'
 
 
-@get_help.handle()
+@sv.on_fullmatch('gs帮助')
 @handle_exception('建议')
-async def send_guide_pic(matcher: Matcher):
+async def send_guide_pic(bot: HoshinoBot, ev: CQEvent):
     logger.info('获得gs帮助图片成功！')
-    await matcher.finish(MessageSegment.image(HELP_IMG))
+    await bot.send(ev, MessageSegment.image(HELP_IMG))
