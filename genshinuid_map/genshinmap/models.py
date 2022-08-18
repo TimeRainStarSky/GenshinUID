@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import List, NamedTuple
+from typing import List, Optional, NamedTuple
 
 from pydantic import HttpUrl, BaseModel, validator
 
@@ -31,7 +31,7 @@ class Label(BaseModel):
     display_priority: int
     children: list
     activity_page_label: int
-    area_page_label: list[int]
+    area_page_label: List[int]
     is_all_area: bool
 
 
@@ -45,7 +45,7 @@ class Tree(BaseModel):
     jump_type: int
     jump_target_id: int
     display_priority: int
-    children: list[Label]
+    children: List[Label]
     activity_page_label: int
     area_page_label: List
     is_all_area: bool
@@ -66,10 +66,10 @@ class Slice(BaseModel):
 
 
 class Maps(BaseModel):
-    slices: list[HttpUrl]
-    origin: list[int]
-    total_size: list[int]
-    padding: list[int]
+    slices: List[HttpUrl]
+    origin: List[int]
+    total_size: List[int]
+    padding: List[int]
 
     @validator("slices", pre=True)
     def slices_to_list(cls, v):
@@ -84,8 +84,8 @@ class MapInfo(BaseModel):
     detail: Maps
     node_type: int
     children: list
-    icon: HttpUrl | None
-    ch_ext: str | None
+    icon: Optional[HttpUrl]
+    ch_ext: Optional[str]
 
     @validator("detail", pre=True)
     def detail_str_to_maps(cls, v):

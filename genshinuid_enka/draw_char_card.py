@@ -18,6 +18,7 @@ RESOURCE_PATH = Path(__file__).parents[1] / 'resource'
 TEXT_PATH = R_PATH / 'texture2D'
 ICON_PATH = RESOURCE_PATH / 'icon'
 GACHA_PATH = RESOURCE_PATH / 'gacha_img'
+STAND_PATH = RESOURCE_PATH / 'char_stand'
 PLAYER_PATH = Path(__file__).parents[1] / 'player'
 RELIC_PATH = RESOURCE_PATH / 'reliquaries'
 ETC_PATH = R_PATH / 'etc'
@@ -174,7 +175,7 @@ async def get_first_main(mainName: str) -> str:
 
 
 async def get_char_percent(raw_data: dict) -> str:
-    percent = ''
+    percent = '0.0'
     char_name = raw_data['avatarName']
     weaponName = raw_data['weaponInfo']['weaponName']
     weaponType = raw_data['weaponInfo']['weaponType']
@@ -516,7 +517,14 @@ async def draw_char_img(
             )
         else:
             offset_x, offset_y = 200, 0
-        char_img = Image.open(GACHA_PATH / f'{char_name}.png')  # 角色图像
+        if char_name == '旅行者':
+            char_img = (
+                Image.open(STAND_PATH / f'{raw_data["avatarId"]}.png')
+                .convert('RGBA')
+                .resize((1421, 800))
+            )
+        else:
+            char_img = Image.open(GACHA_PATH / f'{char_name}.png')  # 角色图像
 
     # 确定图片的长宽
     w, h = char_img.size
@@ -572,16 +580,20 @@ async def draw_char_img(
     lock_img = Image.open(TEXT_PATH / 'icon_lock.png')
 
     # 命座处理
+    holo_img = Image.open(TEXT_PATH / 'holo.png')
+    holo_color = Image.new(
+        'RGBA', holo_img.size, COLOR_MAP[raw_data['avatarElement']]
+    )
     for talent_num in range(0, 6):
         if talent_num + 1 <= len(raw_data['talentList']):
             talent = raw_data['talentList'][talent_num]
-            # img.paste(color_holo_img, (13,270 + talent_num * 66), holo_img)
             talent_img = Image.open(
                 ICON_PATH / '{}.png'.format(talent['talentIcon'])
             )
             talent_img_new = talent_img.resize(
                 (50, 50), Image.Resampling.LANCZOS  # type: ignore
             ).convert("RGBA")
+            img.paste(holo_color, (775, 300 + talent_num * 81), holo_img)
             img.paste(
                 talent_img_new, (850, 375 + talent_num * 81), talent_img_new
             )
@@ -1044,7 +1056,12 @@ async def draw_single_card(
     size_36 = genshin_font_origin(36)
     size_46 = genshin_font_origin(46)
 
-    img_base = Image.open(TEXT_PATH / '{}.png'.format(char['avatarElement']))
+    overlay = Image.open(TEXT_PATH / 'overlay.png')
+    color_img = Image.new(
+        'RGBA', overlay.size, COLOR_MAP[char['avatarElement']]
+    )
+    img_base = ImageChops.overlay(color_img, overlay)
+    '''
     if char['char_name'] in avatarCardOffsetMap:
         offset_x, offset_y = (
             avatarCardOffsetMap[char['char_name']][0],
@@ -1052,11 +1069,11 @@ async def draw_single_card(
         )
     else:
         offset_x, offset_y = 200, 0
-    char_img = Image.open(
-        GACHA_PATH / 'UI_Gacha_AvatarImg_{}.png'.format(char['avatarEnName'])
-    )
+    '''
+    offset_x, offset_y = 0, 0
+    char_img = Image.open(GACHA_PATH / f'{char["char_name"]}.png')
 
-    img_base.paste(char_img, (-439 + offset_x, 130 + offset_y), char_img)
+    img_base.paste(char_img, (-760 + offset_x, 110 + offset_y), char_img)
     img_card.paste(img_base, (-25, -260), char_card_mask)
     img_card = Image.alpha_composite(img_card, char_card_1)
     # img_card.paste(img_card, (0, 0), img_card)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+from typing import List, Union
 from asyncio import gather, create_task
 
 from PIL import Image
@@ -46,7 +47,7 @@ async def make_map(map: Maps) -> Image.Image:
     return img
 
 
-async def get_map_by_pos(map: Maps, x: int | float) -> Image.Image:
+async def get_map_by_pos(map: Maps, x: Union[int, float]) -> Image.Image:
     """
     根据横坐标获取地图单片
 
@@ -63,7 +64,7 @@ async def get_map_by_pos(map: Maps, x: int | float) -> Image.Image:
     return await get_img(map.slices[int(x // 4096)])
 
 
-def get_points_by_id(id_: int, points: list[Point]) -> list[XYPoint]:
+def get_points_by_id(id_: int, points: List[Point]) -> List[XYPoint]:
     """
     根据 Label ID 获取坐标点
 
@@ -84,7 +85,7 @@ def get_points_by_id(id_: int, points: list[Point]) -> list[XYPoint]:
     ]
 
 
-def convert_pos(points: list[XYPoint], origin: list[int]) -> list[XYPoint]:
+def convert_pos(points: List[XYPoint], origin: List[int]) -> List[XYPoint]:
     """
     将米游社资源坐标转换为以左上角为原点的坐标系的坐标
 

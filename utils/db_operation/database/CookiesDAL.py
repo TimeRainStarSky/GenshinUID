@@ -13,6 +13,10 @@ class CookiesDAL:
         self.db_session = db_session
 
     async def get_user_data(self, uid: str) -> Optional[NewCookiesTable]:
+        try:
+            await self.db_session.execute('ALTER TABLE NewCookiesTable ADD COLUMN Stoken TEXT')  # type: ignore
+        except:
+            pass
         sql = select(NewCookiesTable).where(NewCookiesTable.UID == uid)
         result = await self.db_session.execute(sql)  # type: ignore
         data = result.scalars().all()
@@ -173,9 +177,9 @@ class CookiesDAL:
                 StatusA='off',
                 StatusB='off',
                 StatusC='off',
-                Num=140,
+                NUM=140,
                 Extra=None,
-                SToken=None,
+                Stoken=None,
             )
             self.db_session.add(new_data)
         await self.db_session.flush()  # type: ignore

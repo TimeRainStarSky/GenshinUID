@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 from sqlalchemy import Column, String, Integer
 
@@ -7,6 +8,7 @@ from .db_config import Base, engine
 
 class PushData(Base):
     __tablename__ = 'PushData'
+    __table_args__ = {'extend_existing': True}
 
     UID = Column(Integer, primary_key=True)
     CoinPush = Column(String, nullable=True)
@@ -25,6 +27,7 @@ class PushData(Base):
 
 class UidData(Base):
     __tablename__ = 'UIDDATA'
+    __table_args__ = {'extend_existing': True}
 
     USERID = Column(Integer, primary_key=True)
     UID = Column(String, nullable=True)
@@ -33,6 +36,7 @@ class UidData(Base):
 
 class NewCookiesTable(Base):
     __tablename__ = 'NewCookiesTable'
+    __table_args__ = {'extend_existing': True}
 
     UID = Column(Integer, primary_key=True)
     Cookies = Column(String, nullable=False)
@@ -47,6 +51,7 @@ class NewCookiesTable(Base):
 
 class CookiesCache(Base):
     __tablename__ = 'CookiesCache'
+    __table_args__ = {'extend_existing': True}
 
     UID = Column(String, primary_key=True, nullable=True)
     MYSID = Column(String, nullable=True)
@@ -55,6 +60,7 @@ class CookiesCache(Base):
 
 class Config(Base):
     __tablename__ = 'Config'
+    __table_args__ = {'extend_existing': True}
 
     Name = Column(String, primary_key=True)
     Status = Column(String, nullable=True)
@@ -67,4 +73,4 @@ async def create_all():
         await conn.run_sync(Base.metadata.create_all)
 
 
-asyncio.run(create_all())
+threading.Thread(target=lambda: asyncio.run(create_all()), daemon=True).start()

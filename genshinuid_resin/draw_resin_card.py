@@ -24,7 +24,7 @@ no_pic = Image.open(TEXT_PATH / 'no.png')
 
 based_w = 500
 based_h = 900
-white_overlay = Image.new('RGBA', (based_w, based_h), (228, 222, 210, 222))
+white_overlay = Image.new('RGBA', (based_w, based_h), (255, 251, 242, 225))
 
 first_color = (29, 29, 29)
 second_color = (98, 98, 98)
@@ -74,7 +74,9 @@ async def get_resin_img(qid: int):
             status = await owner_cookies(uid)
             if status != '该用户没有绑定过Cookies噢~':
                 useable_uid_list.append(uid)
-        logger.info('[每日信息]可用UID: {}'.format(uid_list))
+        logger.info('[每日信息]可用UID: {}'.format(useable_uid_list))
+        if len(useable_uid_list) == 0:
+            return '请先绑定一个可用CK & UID再来查询哦~'
         # 开始绘图任务
         task = []
         img = Image.new(
@@ -96,6 +98,12 @@ async def _draw_all_resin_img(img: Image.Image, uid: str, index: int):
     img.paste(resin_img, (500 * index, 0), resin_img)
 
 
+async def seconds2hours(seconds: int) -> str:
+    m, s = divmod(int(seconds), 60)
+    h, m = divmod(m, 60)
+    return '%02d小时%02d分' % (h, m)
+
+
 async def draw_resin_img(uid: str) -> Image.Image:
     # 获取数据
     daily_data = await get_daily_data(uid)
@@ -103,11 +111,14 @@ async def draw_resin_img(uid: str) -> Image.Image:
     enta_data_path = (
         Path(__file__).parents[1] / 'player' / uid / 'rawData.json'
     )
-    if enta_data_path.exists:
+    if enta_data_path.exists():
         with open(enta_data_path, 'r', encoding='utf-8') as f:
             player_data = json.load(f)
     else:
-        player_data = await get_enka_info(uid)
+        try:
+            player_data = await get_enka_info(uid)
+        except:
+            player_data = {}
 
     # 处理数据
     if player_data:
@@ -132,6 +143,13 @@ async def draw_resin_img(uid: str) -> Image.Image:
     max_resin = daily_data['max_resin']
     resin_str = f'{resin}/{max_resin}'
     resin_percent = resin / max_resin
+    if resin_percent > 0.8:
+        resin_color = red_color
+    else:
+        resin_color = second_color
+    resin_recovery_time = await seconds2hours(
+        daily_data['resin_recovery_time']
+    )
 
     delay = 53
     # 洞天宝钱
@@ -198,6 +216,14 @@ async def draw_resin_img(uid: str) -> Image.Image:
     ring_pic.seek(round(resin_percent * 49))
     img.paste(ring_pic, (0, 0), ring_pic)
 
+    # 写树脂剩余时间
+    img_draw.text(
+        (250, 370),
+        f'还剩{resin_recovery_time}',
+        font=gs_font_20,
+        fill=resin_color,
+        anchor='mm',
+    )
     # 写签名
     img_draw.text(
         (48, 137), signature, font=gs_font_26, fill=second_color, anchor='lm'

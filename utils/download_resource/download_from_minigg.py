@@ -1,5 +1,6 @@
+import json
 import asyncio
-from typing import Any, List, Tuple, Union
+from typing import List
 
 import aiofiles  # type: ignore
 from nonebot.log import logger
@@ -24,18 +25,19 @@ async def _download(
     sem: asyncio.Semaphore,
     file_name: str,
     file_path: Path,
+    log_prefix: str,
 ):
     async with sem:
-        logger.info(f'正在下载{file_name},URL为{url}')
+        logger.info(f'{log_prefix}正在下载 {file_name} ,URL为{url}')
         async with sess.get(url) as res:
             content = await res.read()
 
         if res.status != 200:
-            logger.info(f"下载失败: {res.status}")
+            logger.info(f"{log_prefix}{file_name} 下载失败: {res.status}")
 
         async with aiofiles.open(file_path / file_name, "+wb") as f:
             await f.write(content)
-            logger.info(f"下载成功: {res.status}")
+            logger.info(f"{log_prefix}{file_name} 下载成功: {res.status}")
 
 
 async def download_by_minigg():
@@ -50,13 +52,13 @@ async def download_by_minigg():
         if not char_path.exists() or not char_side_path.exists():
             char_download_list.append(char)
     if char_download_list:
-        logger.info(f'本次需要下载{",".join(char_download_list)}的图片')
+        logger.info(f'[minigg] 本次需要下载{",".join(char_download_list)}的图片')
         char_faild = await get_char_pic(char_download_list)
         if char_faild:
             return_str += f'下载{",".join(char_faild)}的图片失败'
-            logger.info(f'下载{",".join(char_faild)}的图片失败')
+            logger.info(f'[minigg] 下载{",".join(char_faild)}的图片失败')
     else:
-        logger.info('无需下载角色图片!')
+        logger.info('[minigg] 无需下载角色图片!')
 
     # 判断需要下载哪些武器图片
     weapon_download_list = []
@@ -65,28 +67,28 @@ async def download_by_minigg():
         if not weapon_path.exists():
             weapon_download_list.append(weapon)
     if weapon_download_list:
-        logger.info(f'本次需要下载{",".join(weapon_download_list)}的图片')
+        logger.info(f'[minigg] 本次需要下载{",".join(weapon_download_list)}的图片')
         weapon_faild = await get_weapon_pic(weapon_download_list)
         if weapon_faild:
             return_str += f'下载{",".join(weapon_faild)}的图片失败'
-            logger.info(f'下载{",".join(weapon_faild)}的图片失败')
+            logger.info(f'[minigg] 下载{",".join(weapon_faild)}的图片失败')
     else:
-        logger.info('无需下载武器图片!')
+        logger.info('[minigg] 无需下载武器图片!')
 
     # 判断需要下载哪些圣遗物图片
     rel_download_list = []
     for rel in REL_ALL_LIST:
-        rel_path = REL_PATH / f'{rel}.png'
+        rel_path = REL_PATH / f'{rel}.json'
         if not rel_path.exists():
             rel_download_list.append(rel)
     if rel_download_list:
-        logger.info(f'本次需要下载{",".join(rel_download_list)}的图片')
+        logger.info(f'[minigg] 本次需要下载{",".join(rel_download_list)}的图片')
         rel_faild = await get_rel_pic(rel_download_list)
         if rel_faild:
             return_str += f'下载{",".join(rel_faild)}的图片失败'
-            logger.info(f'下载{",".join(rel_faild)}的图片失败')
+            logger.info(f'[minigg] 下载{",".join(rel_faild)}的图片失败')
     else:
-        logger.info('无需下载圣遗物图片!')
+        logger.info('[minigg] 无需下载圣遗物图片!')
 
     return return_str
 
@@ -107,8 +109,10 @@ async def get_char_pic(name_list: List):
     faild = []
     sem = asyncio.Semaphore(MAX_TASKS)
     async with ClientSession() as sess:
-        for name in name_list:
-            logger.info(f'正在下载角色{name}的图片')
+        for i, name in enumerate(name_list):
+            log_prefix = f'[minigg 角色 {i + 1}/{len(name_list)}] '
+
+            logger.info(f'{log_prefix}正在下载角色{name}的图片')
             name = await alias_to_char_name(name)
             avatar_id = await name_to_avatar_id(name)
 
@@ -130,6 +134,7 @@ async def get_char_pic(name_list: List):
                                 sem,
                                 f'{avatar_id}.png',
                                 CHAR_STAND_PATH,
+                                log_prefix,
                             ),
                             timeout=35,
                         )
@@ -144,6 +149,7 @@ async def get_char_pic(name_list: List):
                             sem,
                             f'{avatar_id}.png',
                             CHAR_SIDE_PATH,
+                            log_prefix,
                         ),
                         timeout=30,
                     )
@@ -158,6 +164,7 @@ async def get_char_pic(name_list: List):
                             sem,
                             f'{avatar_id}.png',
                             CHAR_PATH,
+                            log_prefix,
                         ),
                         timeout=30,
                     )
@@ -174,7 +181,7 @@ async def _gather(tasks: List, faild: List, name: str):
         await asyncio.gather(*tasks)
         await asyncio.sleep(1)
     except asyncio.exceptions.TimeoutError:
-        logger.warning(f'{name}超时了!')
+        logger.warning(f'[minigg] {name} 超时了!')
         faild.append(name)
     return faild
 
@@ -192,8 +199,10 @@ async def get_weapon_pic(name_list: List):
     faild = []
     sem = asyncio.Semaphore(MAX_TASKS)
     async with ClientSession() as sess:
-        for name in name_list:
-            logger.info(f'正在下载武器{name}的图片')
+        for i, name in enumerate(name_list):
+            log_prefix = f'[minigg 武器 {i + 1}/{len(name_list)}] '
+
+            logger.info(f'{log_prefix}正在下载武器{name}的图片')
             raw_data = await get_weapon_info(name)
             icon_url = raw_data['images']['icon']
             tasks.append(
@@ -204,6 +213,7 @@ async def get_weapon_pic(name_list: List):
                         sem,
                         f'{name}.png',
                         WEAPON_PATH,
+                        log_prefix,
                     ),
                     timeout=30,
                 )
@@ -228,8 +238,10 @@ async def get_rel_pic(name_list: List):
     faild = []
     sem = asyncio.Semaphore(MAX_TASKS)
     async with ClientSession() as sess:
-        for name in name_list:
-            logger.info(f'正在下载圣遗物{name}的图片')
+        for i, name in enumerate(name_list):
+            log_prefix = f'[minigg 圣遗物 {i + 1}/{len(name_list)}] '
+
+            logger.info(f'{log_prefix}正在下载圣遗物{name}的图片')
             raw_data = await get_misc_info('artifacts', name)
             if '之人' in name:
                 part_list = ['circlet']
@@ -248,10 +260,13 @@ async def get_rel_pic(name_list: List):
                                 sem,
                                 f'{p_name}.png',
                                 REL_PATH,
+                                log_prefix,
                             ),
                             timeout=30,
                         )
                     )
+            with open(REL_PATH / f'{name}.json', 'w', encoding='utf8') as f:
+                json.dump(raw_data, f, ensure_ascii=False, indent=4)
             if len(tasks) > MAX_TASKS:
                 faild.extend(await _gather(tasks, faild, name))
                 tasks = []
