@@ -6,13 +6,21 @@ from copy import deepcopy
 
 import httpx
 
-path = Path(__file__).parents[1] / 'utils' / 'alias' / 'avatarId2Name.json'
+Genshin_version = '3.0.0'
+
+path = (
+    Path(__file__).parents[1]
+    / 'utils'
+    / 'enka_api'
+    / 'map'
+    / f'avatarId2Name_mapping_{Genshin_version}.json'
+)
 element_path = (
     Path(__file__).parents[1]
     / 'utils'
     / 'enka_api'
     / 'map'
-    / 'avatarName2Element_mapping_2.8.0.json'
+    / f'avatarName2Element_mapping_{Genshin_version}.json'
 )
 with open(path, 'r', encoding='utf-8') as f:
     char_id_list = json.load(f)
@@ -23,8 +31,11 @@ with open(element_path, 'r', encoding='utf-8') as f:
 char_list = []
 char_action = {}
 INDEX_MAP = ['', 'A', 'E', 'Q']
-attack_type_list = {'普通攻击': 'A', '重击': 'B', '坠地冲击': 'C', '战技': 'E', '爆发': 'Q'}
+attack_type_list = {'普通攻击': 'A', '重击': 'B', '下落攻击': 'C', '战技': 'E', '爆发': 'Q'}
 label_type_list = {
+    '普通攻击': 'A',
+    '重击': 'B',
+    '下落攻击': 'C',
     '攻击': 'attack',
     '充能效率': 'ce',
     '生命值': 'hp',
@@ -37,8 +48,13 @@ extra = {
     '胡桃': {'A重击伤害': '蒸发', 'Q低血量时技能伤害': '蒸发'},
     '香菱': {'E喷火伤害': '蒸发', 'Q旋火轮伤害': '蒸发'},
     '达达利亚': {'Q技能伤害·近战': '蒸发', 'Q技能伤害·远程': '蒸发'},
-    '雷电将军': {'Q梦想一刀基础伤害': '满愿力'},
+    '雷电将军': {'Q梦想一刀基础伤害': '满愿力', 'Q一段伤害': '超激化', 'Q重击伤害': '超激化'},
     '甘雨': {'A霜华矢命中伤害': '融化', 'A霜华矢·霜华绽发伤害': '融化'},
+    '可莉': {'A重击伤害': '蒸发'},
+    '优菈': {'Q光降之剑基础伤害': '13层'},
+    '行秋': {'E技能伤害': '蒸发'},
+    '八重神子': {'Q天狐霆雷伤害': '超激化', 'E杀生樱伤害·叁阶': '超激化'},
+    '菲谢尔': {'E奥兹攻击伤害': '超激化'},
 }
 template = {'A重击伤害': {'name': 'A重击伤害', 'type': '', 'plus': 1, 'value': []}}
 
@@ -114,9 +130,6 @@ def find_tag(labels: List, index: int, char: str, parameters: dict) -> dict:
             ]
             if indexA == 0:
                 temp_value = temp
-                # 雷神
-                if '愿力加成' in label_name:
-                    break
             # 只采用高空坠地的倍率
             elif indexA == 1 and '低空/高空坠地' in label:
                 temp_value = temp
@@ -148,7 +161,7 @@ def find_tag(labels: List, index: int, char: str, parameters: dict) -> dict:
         # 提升指提升百分比 例如  E:dmgBouns+50%
         # 提高指提高固定值 例如  Q:addDmg+40%defense
 
-        label_keyword_hurt_list = ['一段', '肆阶']
+        label_keyword_hurt_list = ['一段', '壹阶', '贰阶', '叁阶', '肆阶']
         label_keyword_up_list = {
             '普通攻击': 'A:addDmg',
             '重击': 'B:addDmg',
@@ -160,7 +173,9 @@ def find_tag(labels: List, index: int, char: str, parameters: dict) -> dict:
             '元素精通': 'em',
         }
 
-        if '提升' in label_name:
+        if '持续时间' in label_name:
+            continue
+        elif '提升' in label_name:
             # 云瑾和申鹤
             if '伤害值提升' in label_name:
                 parameter_list['name'] = fill_label(label_name, index)

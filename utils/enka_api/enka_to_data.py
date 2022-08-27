@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 from typing import Union, Optional
 
+from ...version import Genshin_version
 from .get_enka_data import get_enka_info
 from ..minigg_api.get_minigg_data import get_weapon_info
 
@@ -10,7 +11,7 @@ R_PATH = Path(__file__).parent
 MAP_PATH = R_PATH / 'map'
 PLAYER_PATH = Path(__file__).parents[2] / 'player'
 
-version = '2.8.0'
+version = Genshin_version
 
 avatarName2Element_fileName = f'avatarName2Element_mapping_{version}.json'
 weaponHash2Name_fileName = f'weaponHash2Name_mapping_{version}.json'
@@ -71,7 +72,17 @@ async def enka_to_data(
         pass
     else:
         enka_data = await get_enka_info(uid)
-    if enka_data is None:
+    if isinstance(enka_data, str):
+        return enka_data
+    if isinstance(enka_data, dict):
+        if 'playerInfo' not in enka_data:
+            im = (
+                '服务器正在维护或者关闭中...\n'
+                f'检查https://enka.network/u/{uid}是否可以访问\n'
+                '如可以访问,尝试[切换api]或上报Bug!'
+            )
+            return im
+    elif enka_data is None:
         return {}
 
     now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))

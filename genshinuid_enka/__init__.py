@@ -17,6 +17,8 @@ get_char_info = on_command(
     priority=2,
 )
 
+AUTO_REFRESH = False
+
 refresh_scheduler = require('nonebot_plugin_apscheduler').scheduler
 
 PLAYER_PATH = Path(__file__).parents[1] / 'player'
@@ -51,6 +53,9 @@ async def send_char_info(
         uid = await select_db(qid, mode='uid')
         uid = str(uid)
     logger.info('[查询角色面板]uid: {}'.format(uid))
+
+    if '未找到绑定的UID' in uid:
+        await matcher.finish(UID_HINT)
 
     # 获取角色名
     char_name = ''.join(re.findall('[\u4e00-\u9fa5]', raw_mes))
@@ -111,7 +116,9 @@ async def refresh_char_data():
 
 @refresh_scheduler.scheduled_job('cron', hour='4')
 async def daily_refresh_charData():
-    await refresh_char_data()
+    global AUTO_REFRESH
+    if AUTO_REFRESH:
+        await refresh_char_data()
 
 
 @refresh.handle()
@@ -139,6 +146,8 @@ async def send_card_info(
         else:
             uid = await select_db(qid, mode='uid')
             uid = str(uid)
+            if not uid:
+                await matcher.finish(UID_HINT)
     im = await enka_to_data(uid)
     logger.info(f'UID{uid}获取角色数据成功！')
     await matcher.finish(str(im))
