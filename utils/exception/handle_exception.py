@@ -2,8 +2,9 @@ import re
 from functools import wraps
 
 from nonebot.log import logger
-from nonebot.matcher import Matcher
-from nonebot.exception import ActionFailed, FinishedException
+from aiocqhttp.exceptions import ActionFailed
+
+from hoshino.typing import List, CQEvent, Iterable
 
 from ..message.error_reply import *  # noqa: F403,F401
 
@@ -23,7 +24,8 @@ def handle_exception(name: str, log_msg: str = None, fail_msg: str = None):  # t
         async def inner(
             log_msg: str = log_msg, fail_msg: str = fail_msg, **kwargs
         ):
-            matcher: Matcher = kwargs['matcher']
+            print(kwargs)
+            matcher: CQEvent = kwargs['matcher']
             try:
                 await func(**kwargs)
             except ActionFailed as e:
