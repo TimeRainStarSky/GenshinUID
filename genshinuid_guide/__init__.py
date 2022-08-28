@@ -1,42 +1,45 @@
 from pathlib import Path
-from typing import Any, Tuple
 
 import httpx
 
 from ..all_import import *
 from ..utils.alias.alias_to_char_name import alias_to_char_name
-from ..utils.exception.handle_exception import handle_exception
-
 
 IMG_PATH = Path(__file__).parent / 'img'
 
 
-@get_guide_pic.handle()
-@handle_exception('建议')
-async def send_guide_pic(
-    matcher: Matcher, args: Tuple[Any, ...] = RegexGroup()
-):
-    name = await alias_to_char_name(str(args[0]))
+@sv.on_rex('([\u4e00-\u9fa5]+)(推荐|攻略)')
+async def send_guide_pic(bot: HoshinoBot, ev: CQEvent):
+    name = str(ev['match'].group(1))
+    if not name:
+        return
+    name = await alias_to_char_name(name)
     url = 'https://img.genshin.minigg.cn/guide/{}.jpg'.format(name)
     if httpx.head(url).status_code == 200:
         logger.info('获得{}推荐图片成功！'.format(name))
-        await matcher.finish(MessageSegment.image(url))
+        await bot.send(ev, MessageSegment.image(url))
     else:
         logger.warning('未获得{}推荐图片。'.format(name))
 
 
-@get_bluekun_pic.handle()
-@handle_exception('参考面板')
-async def send_bluekun_pic(matcher: Matcher, args: Message = CommandArg()):
-    if str(args[0]) in ['冰', '水', '火', '草', '雷', '风', '岩']:
-        name = str(args[0])
+@sv.on_prefix('参考面板')
+async def send_bluekun_pic(bot: HoshinoBot, ev: CQEvent):
+    if ev.message:
+        message = ev.message.extract_plain_text().replace(' ', '')
     else:
-        name = await alias_to_char_name(str(args[0]))
+        return
+
+    if message == '':
+        return
+
+    if str(message) in ['冰', '水', '火', '草', '雷', '风', '岩']:
+        name = str(message)
+    else:
+        name = await alias_to_char_name(str(message))
     img = IMG_PATH / '{}.jpg'.format(name)
     if img.exists():
-        with open(img, 'rb') as f:
-            im = MessageSegment.image(f.read())
+        img = await convert_img(img)
         logger.info('获得{}参考面板图片成功！'.format(name))
-        await matcher.finish(im)
+        await bot.send(ev, img)
     else:
         logger.warning('未找到{}参考面板图片'.format(name))
