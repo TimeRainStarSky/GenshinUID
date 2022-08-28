@@ -1,43 +1,33 @@
+import random
+
 from .sign import sign_in, daily_sign
 from ..all_import import *  # noqa: F403,F401
 
-sign_scheduler = require('nonebot_plugin_apscheduler').scheduler
-
-get_sign = on_command('签到', priority=priority)
-all_recheck = on_command('全部重签', permission=SUPERUSER, priority=priority)
 
 # 每日零点半执行米游社原神签到
-@sign_scheduler.scheduled_job('cron', hour='0', minute='30')
+@sv.scheduled_job('cron', hour='0', minute='30')
 async def sign_at_night():
     await send_daily_sign()
 
 
 # 群聊内 签到 功能
-@get_sign.handle()
-@handle_exception('签到')
-async def get_sign_func(
-    event: MessageEvent, matcher: Matcher, args: Message = CommandArg()
-):
-    if args:
-        await get_sign.finish()
+@sv.on_fullmatch('签到')
+async def get_sign_func(bot: HoshinoBot, ev: CQEvent):
     logger.info('开始执行[签到]')
-    qid = int(event.sender.user_id)  # type: ignore
+    qid = int(ev.sender['user_id'])  # type: ignore
     logger.info('[签到]QQ号: {}'.format(qid))
     uid = await select_db(qid, mode='uid')
     logger.info('[签到]UID: {}'.format(uid))
     im = await sign_in(uid)
-    await matcher.finish(im, at_sender=True)
+    await bot.send(ev, im, at_sender=True)
 
 
-@all_recheck.handle()
-@handle_exception('全部重签')
-async def recheck(matcher: Matcher, args: Message = CommandArg()):
-    if args:
-        return
+@sv.on_fullmatch('全部重签')
+async def recheck(bot: HoshinoBot, ev: CQEvent):
     logger.info('开始执行[全部重签]')
-    await matcher.send('已开始执行')
+    await bot.send(ev, '已开始执行')
     await send_daily_sign()
-    await matcher.finish('执行完成')
+    await bot.send(ev, '执行完成')
 
 
 async def send_daily_sign():
@@ -52,8 +42,7 @@ async def send_daily_sign():
     # 执行私聊推送
     for qid in private_msg_list:
         try:
-            await bot.call_api(
-                api='send_private_msg',
+            await bot.send_private_msg(
                 user_id=qid,
                 message=private_msg_list[qid],
             )
@@ -80,8 +69,7 @@ async def send_daily_sign():
             msg_title = group_msg_list[gid]['push_message']
         # 发送群消息
         try:
-            await bot.call_api(
-                api='send_group_msg',
+            await bot.send_group_msg(
                 group_id=gid,
                 message=msg_title,
             )
