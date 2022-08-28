@@ -5,24 +5,18 @@ from ..utils.download_resource.download_all_resource import (
     download_all_resource,
 )
 
-download_resource = on_command('下载全部资源')
 
-
-@download_resource.handle()
-@handle_exception('下载全部资源', '资源下载错误')
-async def send_download_resource_msg(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
-    matcher: Matcher,
-    args: Message = CommandArg(),
-):
-    if args:
+@sv.on_fullmatch('下载全部资源')
+async def send_download_resource_msg(bot: HoshinoBot, ev: CQEvent):
+    if ev.sender:
+        qid = ev.sender['user_id']
+    else:
         return
-    qid = event.sender.user_id
-    if qid not in SUPERUSERS:
+    if qid not in bot.config.SUPERUSERS:
         return
-    await matcher.send('正在开始下载~可能需要较久的时间!')
+    await bot.send(ev, '正在开始下载~可能需要较久的时间!')
     im = await download_all_resource()
-    await matcher.finish(im)
+    await bot.send(ev, im)
 
 
 async def startup():
