@@ -3,22 +3,13 @@ from ..all_import import *  # noqa: F403,F401
 from ..utils.db_operation.db_operation import select_db
 from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
 
-get_role_info = on_regex(
+
+@sv.on_rex(
     r'^(\[CQ:at,qq=[0-9]+\])?( )?'
     r'(uid|查询|mys)?([0-9]+)?'
     r'(\[CQ:at,qq=[0-9]+\])?( )?$',
-    block=True,
 )
-
-
-@get_role_info.handle()
-@handle_exception('查询角色信息')
-async def send_role_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
-    matcher: Matcher,
-    args: Tuple[Any, ...] = RegexGroup(),
-    custom: ImageAndAt = Depends(),
-):
+async def send_role_info(bot: HoshinoBot, ev: CQEvent):
     logger.info('开始执行[查询角色信息]')
     logger.info('[查询角色信息]参数: {}'.format(args))
     qid = event.user_id
