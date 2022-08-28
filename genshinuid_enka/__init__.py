@@ -1,4 +1,5 @@
 import re
+import random
 from pathlib import Path
 
 from .draw_char_card import *
@@ -10,30 +11,17 @@ from ..utils.message.error_reply import *  # noqa: F401,F403
 from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
 from ..utils.alias.alias_to_char_name import alias_to_char_name
 
-refresh = on_command('强制刷新')
-get_charcard_list = on_command('毕业度统计')
 get_char_info = on_command(
     '查询',
     priority=2,
 )
 
 AUTO_REFRESH = False
-
-refresh_scheduler = require('nonebot_plugin_apscheduler').scheduler
-
 PLAYER_PATH = Path(__file__).parents[1] / 'player'
 
 
-@get_char_info.handle()
-@handle_exception('查询角色面板')
-async def send_char_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
-    matcher: Matcher,
-    args: Message = CommandArg(),
-    custom: ImageAndAt = Depends(),
-):
-    if args is None:
-        return
+@sv.on_rex(r'(查询)([\u4e00-\u9fa5]+)')
+async def send_char_info(bot: HoshinoBot, ev: CQEvent):
     logger.info('开始执行[查询角色面板]')
     raw_mes = args.extract_plain_text().strip()
     at = custom.get_first_at()
@@ -114,21 +102,19 @@ async def refresh_char_data():
         return f'执行成功！共刷新{str(t)}个角色！'
 
 
-@refresh_scheduler.scheduled_job('cron', hour='4')
+@sv.scheduled_job('cron', hour='4')
 async def daily_refresh_charData():
     global AUTO_REFRESH
     if AUTO_REFRESH:
         await refresh_char_data()
 
 
-@refresh.handle()
-@handle_exception('强制刷新')
-async def send_card_info(
-    matcher: Matcher,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
-    args: Message = CommandArg(),
-):
-    message = args.extract_plain_text().strip().replace(' ', '')
+@sv.on_prefix('强制刷新')
+async def send_card_info(bot: HoshinoBot, ev: CQEvent):
+    if ev.message:
+        message = ev.message.extract_plain_text().replace(' ', '')
+    else:
+        return
     uid = re.findall(r'\d+', message)  # str
     m = ''.join(re.findall('[\u4e00-\u9fa5]', message))
     qid = int(event.sender.user_id)  # type: ignore
@@ -137,31 +123,26 @@ async def send_card_info(
         uid = uid[0]
     else:
         if m == '全部数据':
-            if qid in SUPERUSERS:
-                await matcher.send('开始刷新全部数据，这可能需要相当长的一段时间！！')
+            if qid in bot.config.SUPERUSERS:
+                await bot.send(ev, '开始刷新全部数据，这可能需要相当长的一段时间！！')
                 im = await refresh_char_data()
-                await matcher.finish(str(im))
+                await bot.send(ev, str(im))
+                return
             else:
                 return
         else:
             uid = await select_db(qid, mode='uid')
             uid = str(uid)
-            if not uid:
-                await matcher.finish(UID_HINT)
+            if '未找到绑定的UID' in uid:
+                await bot.send(ev, UID_HINT)
+                return
     im = await enka_to_data(uid)
     logger.info(f'UID{uid}获取角色数据成功！')
-    await matcher.finish(str(im))
+    await bot.send(ev, str(im))
 
 
-@get_charcard_list.handle()
-@handle_exception('毕业度统计')
-async def send_charcard_list(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
-    matcher: Matcher,
-    args: Message = CommandArg(),
-    custom: ImageAndAt = Depends(),
-):
-
+@sv.on_prefix('毕业度统计')
+async def send_charcard_list(bot: HoshinoBot, ev: CQEvent):
     message = args.extract_plain_text().strip().replace(' ', '')
     limit = re.findall(r'\d+', message)  # str
     if len(limit) >= 1:
