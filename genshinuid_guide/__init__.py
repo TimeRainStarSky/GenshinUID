@@ -7,8 +7,6 @@ from ..all_import import *
 from ..utils.alias.alias_to_char_name import alias_to_char_name
 from ..utils.exception.handle_exception import handle_exception
 
-get_guide_pic = on_regex('([\u4e00-\u9fa5]+)(推荐|攻略)')
-get_bluekun_pic = on_command('参考面板')
 
 IMG_PATH = Path(__file__).parent / 'img'
 
