@@ -6,42 +6,32 @@ from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.message.error_reply import *  # noqa: F403,F401
 
-notice_scheduler = require('nonebot_plugin_apscheduler').scheduler
-get_resin_info = on_command(
-    '每日', aliases={'mr', '状态', '实时便笺', '便笺', '便签'}, block=True
-)
-get_daily_info = on_command('当前状态')
 
-
-@get_daily_info.handle()
-@handle_exception('每日信息文字版')
-async def send_daily_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
-    matcher: Matcher,
-    custom: ImageAndAt = Depends(),
-    args: Tuple[Any, ...] = CommandArg(),
-):
+@sv.on_fullmatch('当前状态')
+async def send_daily_info(bot: HoshinoBot, ev: CQEvent):
     logger.info('开始执行[每日信息文字版]')
-    if args:
+    at = re.search(r'\[CQ:at,qq=(\d*)]', str(ev.message))
+    if ev.sender:
+        qid = ev.sender['user_id']
+    else:
         return
 
-    at = custom.get_first_at()
-    qid = event.user_id
     if at:
-        qid = at
+        qid = at.group(1)
+
     logger.info('[每日信息文字版]QQ号: {}'.format(qid))
 
     uid: str = await select_db(qid, mode='uid')  # type: ignore
     logger.info('[每日信息文字版]UID: {}'.format(uid))
 
-    if not uid:
-        await matcher.finish(UID_HINT)
+    if '未找到绑定的UID' in uid:
+        await bot.send(ev, UID_HINT)
 
     im = await get_resin_text(uid)
-    await matcher.finish(im)
+    await bot.send(ev, im)
 
 
-@notice_scheduler.scheduled_job('cron', minute='*/30')
+@sv.scheduled_job('cron', minute='*/30')
 async def notice_job():
     bot = get_bot()
     result = await get_notice_list()
@@ -49,8 +39,7 @@ async def notice_job():
     # 执行私聊推送
     for qid in result[0]:
         try:
-            await bot.call_api(
-                api='send_private_msg',
+            await bot.send_private_msg(
                 user_id=qid,
                 message=result[0][qid],
             )
@@ -61,10 +50,8 @@ async def notice_job():
     # 执行群聊推送
     for group_id in result[1]:
         try:
-            await bot.call_api(
-                api='send_group_msg',
-                group_id=group_id,
-                message=result[1][group_id],
+            await bot.send_group_msg(
+                group_id=group_id, message=result[1][group_id]
             )
         except:
             logger.warning(f'[推送检查] 群 {group_id} 群聊推送失败!')
@@ -72,28 +59,26 @@ async def notice_job():
     logger.info('[推送检查]群聊推送完成')
 
 
-@get_resin_info.handle()
-@handle_exception('每日信息')
-async def send_uid_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
-    matcher: Matcher,
-    custom: ImageAndAt = Depends(),
-    args: Tuple[Any, ...] = CommandArg(),
-):
+@sv.on_fullmatch(('每日', 'mr', '状态', '实时便笺', '便笺', '便签'))
+async def send_daily_info_pic(bot: HoshinoBot, ev: CQEvent):
     logger.info('开始执行[每日信息]')
-    if args:
-        return
+    at = re.search(r'\[CQ:at,qq=(\d*)]', str(ev.message))
 
-    at = custom.get_first_at()
-    qid = event.user_id
     if at:
-        qid = at
+        qid = int(at.group(1))
+    else:
+        if ev.sender:
+            qid = int(ev.sender['user_id'])
+        else:
+            return
+
     logger.info('[每日信息]QQ号: {}'.format(qid))
 
     im = await get_resin_img(qid)
     if isinstance(im, str):
-        await matcher.finish(im)
+        await bot.send(ev, im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        im = await convert_img(im)
+        await bot.send(ev, im)
     else:
-        await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')
+        await bot.send(ev, '发生了未知错误,请联系管理员检查后台输出!')

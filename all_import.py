@@ -1,4 +1,6 @@
+import re
 import base64
+import asyncio
 import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union, Optional
@@ -9,8 +11,9 @@ from aiohttp import ClientConnectorError
 from aiocqhttp.exceptions import ActionFailed
 from nonebot import MessageSegment, get_bot  # type: ignore
 
+import hoshino
 from hoshino import Service
-from hoshino.typing import CQEvent, HoshinoBot
+from hoshino.typing import CQEvent, HoshinoBot, CommandSession
 from hoshino.util import (
     FreqLimiter,
     pic2b64,
