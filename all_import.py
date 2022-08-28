@@ -13,7 +13,7 @@ from nonebot import MessageSegment, get_bot  # type: ignore
 
 import hoshino
 from hoshino import Service
-from hoshino.typing import CQEvent, HoshinoBot, CommandSession
+from hoshino.typing import CQEvent, HoshinoBot, CommandSession  # type: ignore
 from hoshino.util import (
     FreqLimiter,
     pic2b64,
