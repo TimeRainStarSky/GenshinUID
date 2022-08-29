@@ -11,42 +11,50 @@ from ..utils.message.error_reply import *  # noqa: F401,F403
 from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
 from ..utils.alias.alias_to_char_name import alias_to_char_name
 
-get_char_info = on_command(
-    '查询',
-    priority=2,
-)
-
 AUTO_REFRESH = False
 PLAYER_PATH = Path(__file__).parents[1] / 'player'
 
 
-@sv.on_rex(r'(查询)([\u4e00-\u9fa5]+)')
+@sv.on_rex(
+    r'^(\[CQ:at,qq=[0-9]+\])?( )?'
+    r'(uid|查询|mys)([0-9]+)?'
+    r'([\u4e00-\u9fa5]+)'
+    r'(\[CQ:at,qq=[0-9]+\])?( )?',
+)
 async def send_char_info(bot: HoshinoBot, ev: CQEvent):
-    logger.info('开始执行[查询角色面板]')
-    raw_mes = args.extract_plain_text().strip()
-    at = custom.get_first_at()
-    img = custom.get_first_image()
-
-    if at:
-        qid = at
+    args = ev['match'].groups()
+    if args[4] is None:
+        return
     else:
-        qid = event.user_id
+        char_name = args[4]
+    logger.info('开始执行[查询角色面板]')
+    logger.info('[查询角色面板]参数: {}'.format(args))
+    # 获取角色名
+    at = re.search(r'\[CQ:at,qq=(\d*)]', str(ev.message))
+    image = re.search(r'\[CQ:image,file=(.*),url=(.*)]', str(ev.message))
+
+    img = None
+    if image:
+        img = image.group(2)
+    if at:
+        qid = int(at.group(1))
+    else:
+        if ev.sender:
+            qid = int(ev.sender['user_id'])
+        else:
+            return
     logger.info('[查询角色面板]QQ: {}'.format(qid))
 
     # 获取uid
-    uid = re.findall(r'\d+', raw_mes)
-    if uid:
-        uid = uid[0]
-    else:
+    if args[3] is None:
         uid = await select_db(qid, mode='uid')
         uid = str(uid)
+    else:
+        uid = args[3]
     logger.info('[查询角色面板]uid: {}'.format(uid))
 
     if '未找到绑定的UID' in uid:
-        await matcher.finish(UID_HINT)
-
-    # 获取角色名
-    char_name = ''.join(re.findall('[\u4e00-\u9fa5]', raw_mes))
+        await bot.send(ev, UID_HINT)
 
     player_path = PLAYER_PATH / str(uid)
     if char_name == '展柜角色':
@@ -57,7 +65,8 @@ async def send_char_info(bot: HoshinoBot, ev: CQEvent):
             if '\u4e00' <= file_name[0] <= '\u9fff':
                 char_list.append(file_name.split('.')[0])
         char_list_str = ','.join(char_list)
-        await matcher.finish(f'UID{uid}当前缓存角色:{char_list_str}', at_sender=True)
+        await bot.send(ev, f'UID{uid}当前缓存角色:{char_list_str}', at_sender=True)
+        return
     else:
         if '旅行者' in char_name:
             char_name = '旅行者'
@@ -68,16 +77,18 @@ async def send_char_info(bot: HoshinoBot, ev: CQEvent):
             with open(char_path, 'r', encoding='utf8') as fp:
                 char_data = json.load(fp)
         else:
-            await matcher.finish(CHAR_HINT.format(char_name), at_sender=True)
+            await bot.send(ev, CHAR_HINT.format(char_name), at_sender=True)
+            return
 
     im = await draw_char_img(char_data, img)
 
     if isinstance(im, str):
-        await matcher.finish(im)
+        await bot.send(ev, im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        im = await convert_img(im)
+        await bot.send(ev, im)
     else:
-        await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')
+        await bot.send(ev, '发生了未知错误,请联系管理员检查后台输出!')
 
 
 async def refresh_char_data():
@@ -115,9 +126,14 @@ async def send_card_info(bot: HoshinoBot, ev: CQEvent):
         message = ev.message.extract_plain_text().replace(' ', '')
     else:
         return
+
     uid = re.findall(r'\d+', message)  # str
     m = ''.join(re.findall('[\u4e00-\u9fa5]', message))
-    qid = int(event.sender.user_id)  # type: ignore
+
+    if ev.sender:
+        qid = int(ev.sender['user_id'])
+    else:
+        return
 
     if len(uid) >= 1:
         uid = uid[0]
@@ -143,22 +159,34 @@ async def send_card_info(bot: HoshinoBot, ev: CQEvent):
 
 @sv.on_prefix('毕业度统计')
 async def send_charcard_list(bot: HoshinoBot, ev: CQEvent):
-    message = args.extract_plain_text().strip().replace(' ', '')
+    if ev.message:
+        message = ev.message.extract_plain_text().replace(' ', '')
+    else:
+        return
     limit = re.findall(r'\d+', message)  # str
     if len(limit) >= 1:
         limit = int(limit[0])
     else:
         limit = 24
-    at = custom.get_first_at()
+
+    at = re.search(r'\[CQ:at,qq=(\d*)]', str(ev.message))
+
     if at:
-        uid = await select_db(at, mode='uid')
+        qid = int(at.group(1))
         message = message.replace(str(at), '')
     else:
-        uid = await select_db(int(event.sender.user_id), mode='uid')  # type: ignore
+        if ev.sender:
+            qid = int(ev.sender['user_id'])
+        else:
+            return
+
+    uid = await select_db(qid, mode='uid')
+
     im = await draw_cahrcard_list(str(uid), limit)
 
     logger.info(f'UID{uid}获取角色数据成功！')
     if isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        im = await convert_img(im)
+        await bot.send(ev, im)
     else:
-        await matcher.finish(str(im))
+        await bot.send(ev, str(im))
