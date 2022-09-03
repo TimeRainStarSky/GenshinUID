@@ -1,21 +1,23 @@
 from typing import List, Union, Optional
 
-from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from sqlalchemy import Column, update
 from sqlalchemy.sql.expression import func
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import CookiesCache, NewCookiesTable
+from ..database.models import CookiesCache, NewCookiesTable
 
 
 class CookiesDAL:
-    def __init__(self, db_session: Session):
+    def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
     async def get_user_data(self, uid: str) -> Optional[NewCookiesTable]:
         try:
-            await self.db_session.execute('ALTER TABLE NewCookiesTable ADD COLUMN Stoken TEXT')  # type: ignore
-        except:
+            await self.db_session.execute(
+                ('ALTER TABLE NewCookiesTable ' 'ADD COLUMN Stoken TEXT')
+            )
+        except Exception:
             pass
         sql = select(NewCookiesTable).where(NewCookiesTable.UID == uid)
         result = await self.db_session.execute(sql)  # type: ignore
@@ -61,6 +63,36 @@ class CookiesDAL:
             return data.Stoken
         else:
             return '该用户没有绑定过Stoken噢~'
+
+    async def get_all_cookie_list(self) -> List[str]:
+        """
+        :说明:
+          获得所有Cookies列表
+        :返回:
+          * ck_list (List[str]): Cookie列表。
+        """
+        sql = select(NewCookiesTable).where(NewCookiesTable.Cookies != '')
+        result = await self.db_session.execute(sql)  # type: ignore
+        data = result.scalars().all()
+        ck_list = []
+        for item in data:
+            ck_list.append(item.Cookies)
+        return ck_list
+
+    async def get_all_stoken_list(self) -> List[str]:
+        """
+        :说明:
+          获得所有Stoken列表
+        :返回:
+          * sk_list (List[str]): stoken列表。
+        """
+        sql = select(NewCookiesTable).where(NewCookiesTable.Stoken != '')
+        result = await self.db_session.execute(sql)  # type: ignore
+        data = result.scalars().all()
+        sk_list = []
+        for item in data:
+            sk_list.append(item.Stoken)
+        return sk_list
 
     async def get_cache_ck(self, uid: str) -> Union[Column[str], str, None]:
         """

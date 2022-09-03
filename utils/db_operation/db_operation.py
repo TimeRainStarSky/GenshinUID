@@ -1,7 +1,4 @@
-import re
 from typing import List, Union, Optional
-
-from sqlalchemy.orm import Session
 
 from .database.ConfigDAL import ConfigDAL
 from .database.CookiesDAL import CookiesDAL
@@ -66,6 +63,22 @@ async def get_all_uid() -> List:
         async with session.begin():
             UidData = UidDataDAL(session)
             lst = await UidData.get_all_uid_list()
+            return lst
+
+
+async def get_all_cookie() -> List:
+    async with async_session() as session:  # type: ignore
+        async with session.begin():
+            Cookies = CookiesDAL(session)
+            lst = await Cookies.get_all_cookie_list()
+            return lst
+
+
+async def get_all_stoken() -> List:
+    async with async_session() as session:  # type: ignore
+        async with session.begin():
+            Cookies = CookiesDAL(session)
+            lst = await Cookies.get_all_stoken_list()
             return lst
 
 
