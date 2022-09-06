@@ -1,6 +1,17 @@
 import re
 
-from ..all_import import *  # noqa: F401, F403
+from nonebot import on_command
+from nonebot.matcher import Matcher
+from nonebot.params import CommandArg
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    Message,
+    MessageSegment,
+    GroupMessageEvent,
+)
+
+from ..config import priority
+from ..utils.exception.handle_exception import handle_exception
 from .get_wiki_text import (
     char_wiki,
     audio_wiki,
@@ -10,151 +21,122 @@ from .get_wiki_text import (
     artifacts_wiki,
 )
 
+get_weapon = on_command('武器', priority=priority)
+get_char = on_command('角色', priority=priority)
+get_cost = on_command('材料', priority=priority)
+get_polar = on_command('命座', priority=priority)
+get_talents = on_command('天赋', priority=priority)
+get_enemies = on_command('原魔', priority=priority)
+get_audio = on_command('语音', priority=priority)
+get_artifacts = on_command('圣遗物', priority=priority)
+get_food = on_command('食物', priority=priority)
 
-@sv.on_prefix('语音')
-async def send_audio(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
 
+@get_audio.handle()
+@handle_exception('语音', '语音发送失败，可能是FFmpeg环境未配置。')
+async def send_audio(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     name = ''.join(re.findall('[\u4e00-\u9fa5]', message))
     im = await audio_wiki(name, message)
     if name == '列表':
-        await bot.send(ev, MessageSegment.image(im))
+        await matcher.finish(MessageSegment.image(im))
     else:
         if isinstance(im, str):
-            await bot.send(ev, im)
+            await matcher.finish(im)
         else:
-            await bot.send(ev, MessageSegment.record(im))
+            await matcher.finish(MessageSegment.record(im))
 
 
-@sv.on_prefix('原魔')
-async def send_enemies(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_enemies.handle()
+@handle_exception('怪物')
+async def send_enemies(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     im = await enemies_wiki(message)
-    await bot.send(ev, im)
+    await matcher.finish(im)
 
 
-@sv.on_prefix('食物')
-async def send_food(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_food.handle()
+@handle_exception('食物')
+async def send_food(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     im = await foods_wiki(message)
-    await bot.send(ev, im)
+    await matcher.finish(im)
 
 
-@sv.on_prefix('圣遗物')
-async def send_artifacts(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_artifacts.handle()
+@handle_exception('圣遗物')
+async def send_artifacts(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     im = await artifacts_wiki(message)
-    await bot.send(ev, im)
+    await matcher.finish(im)
 
 
-@sv.on_prefix('武器')
-async def send_weapon(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_weapon.handle()
+@handle_exception('武器')
+async def send_weapon(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     name = ''.join(re.findall('[\u4e00-\u9fa5]', message))
     level = re.findall(r'\d+', message)
     if len(level) == 1:
         im = await weapon_wiki(name, level=level[0])
     else:
         im = await weapon_wiki(name)
-    await bot.send(ev, im)
+    await matcher.finish(im)
 
 
-@sv.on_prefix('天赋')
-async def send_talents(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_talents.handle()
+@handle_exception('天赋')
+async def send_talents(
+    bot: Bot,
+    event: GroupMessageEvent,
+    matcher: Matcher,
+    args: Message = CommandArg(),
+):
+    message = args.extract_plain_text().strip().replace(' ', '')
     name = ''.join(re.findall('[\u4e00-\u9fa5]', message))
     num = re.findall(r'\d+', message)
     if len(num) == 1:
         im = await char_wiki(name, 'talents', num[0])
         if isinstance(im, list):
-            await hoshino_bot.send_group_forward_msg(
-                group_id=ev.group_id, messages=im
+            await bot.call_api(
+                'send_group_forward_msg', group_id=event.group_id, messages=im
             )
+            await matcher.finish()
             return
     else:
         im = '参数不正确。'
-    await bot.send(ev, im)
+    await matcher.finish(im)
 
 
-@sv.on_prefix('角色')
-async def send_char(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_char.handle()
+@handle_exception('角色')
+async def send_char(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     name = ''.join(re.findall('[\u4e00-\u9fa5]', message))
     level = re.findall(r'\d+', message)
     if len(level) == 1:
         im = await char_wiki(name, 'char', level=level[0])
     else:
         im = await char_wiki(name)
-    await bot.send(ev, im)
+    await matcher.finish(im)
 
 
-@sv.on_prefix('材料')
-async def send_cost(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_cost.handle()
+@handle_exception('材料')
+async def send_cost(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     im = await char_wiki(message, 'costs')
-    await bot.send(ev, im)
+    await matcher.finish(im)
 
 
-@sv.on_prefix('命座')
-async def send_polar(bot: HoshinoBot, ev: CQEvent):
-    if ev.message:
-        message = ev.message.extract_plain_text().replace(' ', '')
-    else:
-        return
-    if message == '':
-        return
-
+@get_polar.handle()
+@handle_exception('命座')
+async def send_polar(matcher: Matcher, args: Message = CommandArg()):
+    message = args.extract_plain_text().strip().replace(' ', '')
     num = int(re.findall(r'\d+', message)[0])  # str
     m = ''.join(re.findall('[\u4e00-\u9fa5]', message))
     if num <= 0 or num > 6:
-        await bot.send(ev, '你家{}有{}命？'.format(m, num))
+        await get_polar.finish('你家{}有{}命？'.format(m, num))
         return
     im = await char_wiki(m, 'constellations', num)
-    await bot.send(ev, im)
+    await matcher.finish(im)
