@@ -1,7 +1,7 @@
 import json
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Union, Optional
+from typing import Any, Dict, Union, Optional
 
 from nonebot.log import logger
 from aiohttp import ClientSession
@@ -101,7 +101,7 @@ def patch_send():
         if "file_image" in model_data.keys() and (
             file_image := model_data.pop("file_image")
         ):
-            new_data: dict[str, Union[BytesIO, str]] = {
+            new_data: Dict[str, Union[BytesIO, str]] = {
                 "file_image": BytesIO(file_image)
             }
             for k, v in model_data.items():
