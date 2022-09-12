@@ -29,7 +29,7 @@ gs_font_15 = genshin_font_origin(15)
 gs_font_26 = genshin_font_origin(26)
 
 
-async def get_user_card(qid: int) -> bytes:
+async def get_user_card(qid: str) -> bytes:
     uid_list: List = await select_db(qid, 'list')  # type: ignore
     w, h = 500, len(uid_list) * 210 + 330
     img = await get_simple_bg(w, h)
@@ -38,7 +38,7 @@ async def get_user_card(qid: int) -> bytes:
     uid_title = Image.open(TEXT_PATH / 'uid_title.png')
     uid_title_draw = ImageDraw.Draw(uid_title)
     uid_title_draw.text(
-        (47, 70), f'QQ号{str(qid)}', (106, 100, 89), font=gs_font_26
+        (47, 70), f'频道ID {str(qid)}', (106, 100, 89), font=gs_font_26
     )
     img.paste(uid_title, (0, 50), uid_title)
     img.paste(uid_hint, (0, 145 + len(uid_list) * 210), uid_hint)

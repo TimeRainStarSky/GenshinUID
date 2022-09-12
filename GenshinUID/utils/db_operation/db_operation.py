@@ -82,7 +82,7 @@ async def get_all_stoken() -> List:
             return lst
 
 
-async def select_db(userid, mode='auto') -> Union[List, str, None]:
+async def select_db(userid: str, mode='auto') -> Union[List, str, None]:
     """
     :说明:
       选择绑定uid/mys库
@@ -115,7 +115,7 @@ async def select_db(userid, mode='auto') -> Union[List, str, None]:
             return im
 
 
-async def switch_db(userid: int, uid: Optional[str] = None) -> str:
+async def switch_db(userid: str, uid: Optional[str] = None) -> str:
     """
     :说明:
       切换绑定的UID列表,绑定一个UID的情况下返回无法切换
@@ -133,7 +133,7 @@ async def switch_db(userid: int, uid: Optional[str] = None) -> str:
             return im
 
 
-async def delete_db(userid: int, data: dict) -> str:
+async def delete_db(userid: str, data: dict) -> str:
     """
     :说明:
       删除当前绑定的UID信息

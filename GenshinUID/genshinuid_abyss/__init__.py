@@ -1,18 +1,16 @@
-from typing import Any, Tuple, Union
+from typing import Any, Tuple
 
 from nonebot import on_regex
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import Depends, RegexGroup
-from nonebot.adapters.onebot.v11 import (
-    MessageSegment,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import MessageEvent
 
 from ..genshinuid_meta import register_menu
 from .draw_abyss_card import draw_abyss_img
+from ..utils.nonebot2.send import local_image
 from ..utils.message.error_reply import UID_HINT
+from ..utils.message.cast_type import cast_to_int
 from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
@@ -53,7 +51,7 @@ get_abyss_info = on_regex(
     ),
 )
 async def send_abyss_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Tuple[Any, ...] = RegexGroup(),
     custom: ImageAndAt = Depends(),
@@ -61,7 +59,7 @@ async def send_abyss_info(
     logger.info('开始执行[查询深渊信息]')
     logger.info(f'[查询深渊信息]参数: {args}')
     at = custom.get_first_at()
-    qid = at or event.user_id
+    qid = at or cast_to_int(event.author)
     if args[2] == 'mys':
         uid = await convert_mysid(args[3])
     elif args[3] is None:
@@ -94,6 +92,6 @@ async def send_abyss_info(
     if isinstance(im, str):
         await matcher.finish(im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        await matcher.finish(local_image(im))
     else:
         await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')

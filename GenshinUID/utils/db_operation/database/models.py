@@ -24,7 +24,10 @@ class PushData(SQLModel, table=True):
 
 
 class UidData(SQLModel, table=True):
-    USERID: int = Field(default=100000000, primary_key=True)
+    ID: int = Field(
+        default=1, primary_key=True, sa_column_kwargs={"autoincrement": 1}
+    )
+    USERID: str = Field(default="100000000", primary_key=True)
     UID: Optional[str]
     MYSID: Optional[str]
 

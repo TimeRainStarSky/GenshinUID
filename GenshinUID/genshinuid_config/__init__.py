@@ -1,20 +1,16 @@
-from typing import Any, Tuple, Union
+from typing import Any, Tuple
 
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot import on_regex, on_command
 from nonebot.permission import SUPERUSER
 from nonebot.params import Depends, CommandArg, RegexGroup
-from nonebot.adapters.onebot.v11 import (
-    Bot,
-    Message,
-    MessageSegment,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import Bot, Message, MessageEvent
 
+from ..utils.nonebot2.send import local_image
 from .draw_config_card import draw_config_img
 from ..utils.message.error_reply import UID_HINT
+from ..utils.message.cast_type import cast_to_int
 from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from .set_config import set_push_value, set_config_func
@@ -45,7 +41,7 @@ async def send_config_card(matcher: Matcher, args: Message = CommandArg()):
     if isinstance(im, str):
         await matcher.finish(im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        await matcher.finish(local_image(im))
     else:
         await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')
 
@@ -54,14 +50,14 @@ async def send_config_card(matcher: Matcher, args: Message = CommandArg()):
 @handle_exception('设置推送服务')
 async def send_config_msg(
     bot: Bot,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Tuple[Any, ...] = RegexGroup(),
     custom: ImageAndAt = Depends(),
 ):
     logger.info('开始执行[设置阈值信息]')
     logger.info('[设置阈值信息]参数: {}'.format(args))
-    qid = event.sender.user_id
+    qid = cast_to_int(event.author)
     at = custom.get_first_at()
 
     if at and await SUPERUSER(bot, event):
@@ -71,7 +67,7 @@ async def send_config_msg(
     logger.info('[设置阈值信息]qid: {}'.format(qid))
 
     try:
-        uid = await select_db(qid, mode='uid')
+        uid = await select_db(str(qid), mode='uid')
     except TypeError:
         await matcher.finish(UID_HINT)
 
@@ -92,15 +88,14 @@ async def send_config_msg(
 @open_and_close_switch.handle()
 async def open_switch_func(
     bot: Bot,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Tuple[Any, ...] = RegexGroup(),
     at: ImageAndAt = Depends(),
 ):
-    qid = event.sender.user_id
+    qid = cast_to_int(event.author)
     if at:
         at = at.get_first_at()  # type: ignore
-
     config_name = args[4]
 
     logger.info(f'[{qid}]尝试[{args[3]}]了[{config_name}]功能')
@@ -122,7 +117,7 @@ async def open_switch_func(
         await matcher.finish('你没有权限操作别人的状态噢~', at_sender=True)
 
     try:
-        uid = await select_db(qid, mode='uid')
+        uid = await select_db(str(qid), mode='uid')
     except TypeError:
         await matcher.finish(UID_HINT)
 
