@@ -6,9 +6,10 @@ from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot import on_regex, on_command
 from nonebot.params import CommandArg, RegexGroup
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
+from nonebot.adapters.qqguild import Message, MessageSegment
 
 from ..genshinuid_meta import register_menu
+from ..utils.nonebot2.send import local_image
 from ..utils.alias.alias_to_char_name import alias_to_char_name
 from ..utils.exception.handle_exception import handle_exception
 
@@ -75,9 +76,7 @@ async def send_bluekun_pic(matcher: Matcher, args: Message = CommandArg()):
         name = await alias_to_char_name(str(args[0]))
     img = IMG_PATH / '{}.jpg'.format(name)
     if img.exists():
-        with open(img, 'rb') as f:
-            im = MessageSegment.image(f.read())
         logger.info('获得{}参考面板图片成功！'.format(name))
-        await matcher.finish(im)
+        await matcher.finish(local_image(img))
     else:
         logger.warning('未找到{}参考面板图片'.format(name))

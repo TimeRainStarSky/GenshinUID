@@ -1,6 +1,6 @@
 from nonebot.rule import Rule
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message
+from nonebot.adapters.qqguild import Message
 
 
 def FullCommand() -> Rule:

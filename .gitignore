@@ -666,4 +666,6 @@ FodyWeavers.xsd
 result.txt
 
 ### GenshinUID ###
-./GenshinUID/genshinuid_help/help.png
+GenshinUID/genshinuid_help/help.png
+GenshinUID/genshinuid_eventlist/event.jpg
+GenshinUID/genshinuid_map/map_data/*

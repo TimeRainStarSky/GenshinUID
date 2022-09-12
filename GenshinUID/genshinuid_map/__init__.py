@@ -1,21 +1,17 @@
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import RegexDict
 from nonebot import on_regex, on_command
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11 import (
-    Bot,
-    MessageSegment,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import Bot, MessageEvent
 
 from ..config import priority
 from .genshinmap.models import MapID
 from ..utils.nonebot2.rule import FullCommand
+from ..utils.nonebot2.send import local_image
 from .create_genshinmap import create_genshin_map
 from .draw_genshinmap_card import draw_genshin_map
 from ..utils.exception.handle_exception import handle_exception
@@ -46,7 +42,7 @@ MAP_CHN_NAME = {
 @handle_exception('切换地图')
 async def send_change_map_msg(
     bot: Bot,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
 ):
     if not await SUPERUSER(bot, event):
@@ -64,7 +60,7 @@ async def send_change_map_msg(
 @handle_exception('生成地图')
 async def send_create_map_msg(
     bot: Bot,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
 ):
     if not await SUPERUSER(bot, event):
@@ -92,7 +88,7 @@ async def send_find_map_msg(
     resource_temp_path = MAP_DATA / f'{MAP_ID_LIST[0].name}_{name}.jpg'
     if resource_temp_path.exists():
         logger.info(f'本地已有{MAP_ID_LIST[0].name}_{name}的资源点,直接发送...')
-        await matcher.finish(MessageSegment.image(resource_temp_path))
+        await matcher.finish(local_image(resource_temp_path))
     else:
         await matcher.send(
             (
@@ -102,9 +98,10 @@ async def send_find_map_msg(
         )
         logger.info('本地未缓存,正在渲染...')
         im = await draw_genshin_map(MAP_ID_LIST[0], name)
-    if isinstance(im, str):
-        await matcher.finish(im)
-    elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
-    else:
-        await matcher.finish('查找失败!')
+        if isinstance(im, str):
+            await matcher.finish(im)
+        elif isinstance(im, bytes):
+            await matcher.finish(local_image(im))
+        else:
+            await matcher.finish('查找失败!')
+            await matcher.finish('查找失败!')

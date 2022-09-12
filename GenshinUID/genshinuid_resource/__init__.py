@@ -1,16 +1,11 @@
 import asyncio
 import threading
-from typing import Union
 
 from nonebot import on_command
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11 import (
-    Bot,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import Bot, MessageEvent
 
 from ..utils.nonebot2.rule import FullCommand
 from ..utils.exception.handle_exception import handle_exception
@@ -25,7 +20,7 @@ download_resource = on_command('下载全部资源', rule=FullCommand())
 @handle_exception('下载全部资源', '资源下载错误')
 async def send_download_resource_msg(
     bot: Bot,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
 ):
     if not await SUPERUSER(bot, event):
