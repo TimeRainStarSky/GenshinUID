@@ -2,7 +2,9 @@ import asyncio
 import threading
 from typing import Optional
 
-from .db_config import Field, SQLModel, engine
+from sqlmodel import Field, SQLModel
+
+from .db_config import engine
 
 
 class PushData(SQLModel, table=True):

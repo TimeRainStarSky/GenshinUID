@@ -664,3 +664,6 @@ FodyWeavers.xsd
 
 ### CI ###
 result.txt
+
+### GenshinUID ###
+./GenshinUID/genshinuid_help/help.png
