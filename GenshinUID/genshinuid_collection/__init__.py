@@ -4,14 +4,12 @@ from nonebot import on_regex
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import Depends, RegexGroup
-from nonebot.adapters.onebot.v11 import (
-    MessageSegment,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import MessageEvent
 
 from ..genshinuid_meta import register_menu
+from ..utils.nonebot2.send import local_image
 from ..utils.message.error_reply import UID_HINT
+from ..utils.message.cast_type import cast_to_int
 from .draw_collection_card import draw_collection_img
 from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
@@ -51,7 +49,7 @@ get_collection_info = on_regex(
     ),
 )
 async def send_collection_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Tuple[Any, ...] = RegexGroup(),
     custom: ImageAndAt = Depends(),
@@ -59,10 +57,8 @@ async def send_collection_info(
     logger.info('开始执行[查询收集信息]')
     logger.info('[查询收集信息]参数: {}'.format(args))
     at = custom.get_first_at()
-    if at:
-        qid = at
-    else:
-        qid = event.user_id
+    qid = at or cast_to_int(event.author)
+    qid = str(qid)
 
     if args[2] != 'mys':
         if args[3] is None:
@@ -83,6 +79,6 @@ async def send_collection_info(
     if isinstance(im, str):
         await matcher.finish(im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        await matcher.finish(local_image(im))
     else:
         await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')

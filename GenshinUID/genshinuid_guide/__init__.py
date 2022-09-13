@@ -1,3 +1,4 @@
+import urllib.parse
 from pathlib import Path
 from typing import Any, Tuple
 
@@ -43,7 +44,10 @@ async def send_guide_pic(
     name = await alias_to_char_name(str(args[0]))
     if name.startswith('旅行者'):
         name = f'{name[:3]}-{name[-1]}'
-    url = 'https://file.microgg.cn/MiniGG/guide/{}.jpg'.format(name)
+    name_encode = urllib.parse.quote(
+        name, safe='/', encoding=None, errors=None
+    )
+    url = 'https://file.microgg.cn/MiniGG/guide/{}.png'.format(name_encode)
     if httpx.head(url).status_code == 200:
         logger.info('获得{}推荐图片成功！'.format(name))
         await matcher.finish(MessageSegment.image(url))

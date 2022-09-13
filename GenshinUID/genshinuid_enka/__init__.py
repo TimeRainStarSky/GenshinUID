@@ -9,16 +9,12 @@ from nonebot.matcher import Matcher
 from nonebot import require, on_command
 from nonebot.permission import SUPERUSER
 from nonebot.params import Depends, CommandArg
-from nonebot.adapters.onebot.v11 import (
-    Bot,
-    Message,
-    MessageSegment,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import Bot, Message, MessageEvent
 
 from ..config import priority
 from ..genshinuid_meta import register_menu
+from ..utils.nonebot2.send import local_image
+from ..utils.message.cast_type import cast_to_int
 from ..utils.enka_api.get_enka_data import switch_api
 from ..utils.enka_api.enka_to_data import enka_to_data
 from ..utils.message.get_image_and_at import ImageAndAt
@@ -45,7 +41,7 @@ refresh_scheduler = require('nonebot_plugin_apscheduler').scheduler
 @handle_exception('切换api')
 async def send_change_api_info(
     bot: Bot,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Message = CommandArg(),
 ):
@@ -79,7 +75,7 @@ async def send_change_api_info(
     ),
 )
 async def send_char_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Message = CommandArg(),
     custom: ImageAndAt = Depends(),
@@ -91,10 +87,9 @@ async def send_char_info(
     at = custom.get_first_at()
     img = custom.get_first_image()
 
-    if at:
-        qid = at
-    else:
-        qid = event.user_id
+    qid = at or cast_to_int(event.author)
+    qid = str(qid)
+
     logger.info('[查询角色面板]QQ: {}'.format(qid))
 
     # 获取uid
@@ -139,7 +134,7 @@ async def send_char_info(
     if isinstance(im, str):
         await matcher.finish(im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        await matcher.finish(local_image(im))
     else:
         await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')
 
@@ -196,13 +191,13 @@ async def daily_refresh_charData():
 async def send_card_info(
     bot: Bot,
     matcher: Matcher,
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     args: Message = CommandArg(),
 ):
     message = args.extract_plain_text().strip().replace(' ', '')
     uid = re.findall(r'\d+', message)  # str
     m = ''.join(re.findall('[\u4e00-\u9fa5]', message))
-    qid = int(event.sender.user_id)  # type: ignore
+    qid = str(cast_to_int(event.author))
 
     if len(uid) >= 1:
         uid = uid[0]
@@ -243,7 +238,7 @@ async def send_card_info(
     ),
 )
 async def send_charcard_list(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Message = CommandArg(),
     custom: ImageAndAt = Depends(),
@@ -267,6 +262,6 @@ async def send_charcard_list(
 
     logger.info(f'UID{uid}获取角色数据成功！')
     if isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        await matcher.finish(local_image(im))
     else:
         await matcher.finish(str(im))
