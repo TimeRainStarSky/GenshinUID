@@ -255,9 +255,7 @@ async def send_charcard_list(
         uid = await select_db(at, mode='uid')
         message = message.replace(str(at), '')
     else:
-        uid = await select_db(
-            int(event.sender.user_id), mode='uid'  # type: ignore
-        )
+        uid = await select_db(str(cast_to_int(event.author)), mode='uid')
     im = await draw_cahrcard_list(str(uid), limit)
 
     logger.info(f'UID{uid}获取角色数据成功！')
