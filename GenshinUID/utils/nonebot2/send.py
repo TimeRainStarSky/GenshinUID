@@ -1,7 +1,7 @@
 import json
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Union, Optional
+from typing import Any, Dict, List, Union, Optional
 
 from nonebot.log import logger
 from aiohttp import ClientSession
@@ -12,9 +12,13 @@ from pydantic import BaseModel, parse_obj_as
 from nonebot.adapters.qqguild.adapter import Adapter
 from nonebot.adapters.qqguild.api.request import _request
 from nonebot.adapters.qqguild.api.handle import API_HANDLERS
-from nonebot.adapters.qqguild.event import Event, MessageEvent
 from nonebot.adapters.qqguild.api.model import Message as APIMessage
 from nonebot.adapters.qqguild.message import Message, MessageSegment
+from nonebot.adapters.qqguild.event import (
+    Event,
+    MessageEvent,
+    DirectMessageCreateEvent,
+)
 from nonebot.adapters.qqguild.api.model import (
     MessageArk,
     MessageEmbed,
@@ -70,8 +74,13 @@ def patch_send():
             if isinstance(message, str)
             else message
         )
+
         message = message if isinstance(message, Message) else Message(message)
         content = message.extract_content() or None
+        guild_id = None
+        if isinstance(event, DirectMessageCreateEvent):
+            event_dict = event.__dict__
+            guild_id = event_dict['guild_id']
         if embed := (message["embed"] or None):
             embed = embed[-1].data["embed"]
         if ark := (message["ark"] or None):
@@ -82,6 +91,7 @@ def patch_send():
             local_image = local_image[-1].data["content"]
         return await self.post_messages(
             channel_id=event.channel_id,
+            guild_id=guild_id,
             msg_id=event.id,
             content=content,
             embed=embed,
@@ -94,10 +104,13 @@ def patch_send():
     Bot.send = send
 
     async def post_messages(
-        adapter: Adapter, bot: Bot, channel_id: int, **data
-    ) -> APIMessage:
+        adapter: Adapter, bot: Bot, channel_id: int, guild_id: int, **data
+    ) -> Union[APIMessage, List[APIMessage]]:
         headers = {"Authorization": adapter.get_authorization(bot.bot_info)}
         model_data = MessageSend(**data).dict(exclude_none=True)
+        d_api = adapter.get_api_base() / f"channels/{channel_id}/messages"
+        if guild_id:
+            d_api = adapter.get_api_base() / f"dms/{guild_id}/messages"
         if "file_image" in model_data.keys() and (
             file_image := model_data.pop("file_image")
         ):
@@ -116,19 +129,22 @@ def patch_send():
                     new_data[k] = v
             async with ClientSession(headers=headers) as session:
                 req = await session.post(
-                    adapter.get_api_base() / f"channels/{channel_id}/messages",
+                    d_api,
                     data=new_data,
                 )
                 data = await req.json()
         else:
             request = Request(
                 "POST",
-                adapter.get_api_base() / f"channels/{channel_id}/messages",
+                d_api,
                 json=model_data,
                 headers=headers,
             )
             data = await _request(adapter, bot, request)
-        return parse_obj_as(APIMessage, data)
+        if guild_id:
+            return parse_obj_as(List[APIMessage], data)
+        else:
+            return parse_obj_as(APIMessage, data)
 
     API_HANDLERS["post_messages"] = post_messages
     logger.success("本地图片发送猴子补丁已注入")
