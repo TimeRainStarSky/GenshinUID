@@ -5,11 +5,12 @@ from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 from nonebot import get_bot, require, on_command
-from nonebot.adapters.onebot.v11 import MessageEvent
+from nonebot.adapters.qqguild import MessageEvent
 
 from ..config import priority
 from .sign import sign_in, daily_sign
 from ..utils.nonebot2.rule import FullCommand
+from ..utils.message.cast_type import cast_to_int
 from ..utils.exception.handle_exception import handle_exception
 from ..utils.db_operation.db_operation import select_db, config_check
 
@@ -36,9 +37,9 @@ async def get_sign_func(
     matcher: Matcher,
 ):
     logger.info('开始执行[签到]')
-    qid = int(event.sender.user_id)  # type: ignore
+    qid = cast_to_int(event.author)
     logger.info('[签到]QQ号: {}'.format(qid))
-    uid = await select_db(qid, mode='uid')
+    uid = await select_db(str(qid), mode='uid')
     logger.info('[签到]UID: {}'.format(uid))
     im = await sign_in(uid)
     await matcher.finish(im, at_sender=True)

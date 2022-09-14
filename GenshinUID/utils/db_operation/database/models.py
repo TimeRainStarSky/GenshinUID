@@ -35,7 +35,7 @@ class UidData(SQLModel, table=True):
 class NewCookiesTable(SQLModel, table=True):
     UID: int = Field(default=100000000, primary_key=True)
     Cookies: str
-    QID: int
+    QID: str
     StatusA: str
     StatusB: str
     StatusC: str

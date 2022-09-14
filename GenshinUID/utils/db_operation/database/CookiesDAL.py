@@ -184,7 +184,7 @@ class CookiesDAL:
         await self.db_session.flush()
         return True
 
-    async def add_cookie_db(self, userid: int, uid: str, cookies: str) -> bool:
+    async def add_cookie_db(self, userid: str, uid: str, cookies: str) -> bool:
         """
         :说明:
           绑定Cookies

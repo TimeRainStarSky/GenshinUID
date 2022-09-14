@@ -151,7 +151,7 @@ async def delete_db(userid: str, data: dict) -> str:
             return im
 
 
-async def cookies_db(uid: str, cookies: str, qid: int):
+async def cookies_db(uid: str, cookies: str, qid: str):
     async with async_session() as session:  # type: ignore
         async with session.begin():
             Cookies = CookiesDAL(session)

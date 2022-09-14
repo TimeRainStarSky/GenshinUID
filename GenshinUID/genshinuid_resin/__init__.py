@@ -5,17 +5,15 @@ from nonebot.log import logger
 from nonebot.params import Depends
 from nonebot.matcher import Matcher
 from nonebot import get_bot, require, on_command
-from nonebot.adapters.onebot.v11 import (
-    MessageSegment,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import MessageEvent
 
 from .notice import get_notice_list
 from .resin_text import get_resin_text
 from .draw_resin_card import get_resin_img
 from ..utils.nonebot2.rule import FullCommand
+from ..utils.nonebot2.send import local_image
 from ..utils.message.error_reply import UID_HINT
+from ..utils.message.cast_type import cast_to_int
 from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.exception.handle_exception import handle_exception
@@ -33,14 +31,14 @@ get_daily_info = on_command('当前状态', rule=FullCommand())
 @get_daily_info.handle()
 @handle_exception('每日信息文字版')
 async def send_daily_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     custom: ImageAndAt = Depends(),
 ):
     logger.info('开始执行[每日信息文字版]')
 
     at = custom.get_first_at()
-    qid = event.user_id
+    qid = at or cast_to_int(event.author)
     if at:
         qid = at
     logger.info('[每日信息文字版]QQ号: {}'.format(qid))
@@ -89,22 +87,22 @@ async def notice_job():
 @get_resin_info.handle()
 @handle_exception('每日信息')
 async def send_uid_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     custom: ImageAndAt = Depends(),
 ):
     logger.info('开始执行[每日信息]')
 
     at = custom.get_first_at()
-    qid = event.user_id
+    qid = at or cast_to_int(event.author)
     if at:
         qid = at
     logger.info('[每日信息]QQ号: {}'.format(qid))
-
+    qid = int(qid)
     im = await get_resin_img(qid)
     if isinstance(im, str):
         await matcher.finish(im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        await matcher.finish(local_image(im))
     else:
         await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')

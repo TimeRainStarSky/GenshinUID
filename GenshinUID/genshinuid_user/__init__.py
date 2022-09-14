@@ -48,10 +48,11 @@ async def send_add_ck_msg(
     qid = cast_to_int(event.author)
     if qid is None:
         await matcher.finish('QID为空，请重试！')
-    im = await deal_ck(mes, qid)
+    qid = str(qid)
+    im = await deal_ck(mes, qid, 'TEXT')
     if isinstance(im, str):
         await matcher.finish(im)
-    await matcher.finish(local_image(im))
+    # await matcher.finish(local_image(im))
 
 
 # 群聊内 绑定uid或者mysid 的命令，会绑定至当前qq号上

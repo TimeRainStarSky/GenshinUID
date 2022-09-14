@@ -63,7 +63,7 @@ async def send_abyss_info(
     if args[2] == 'mys':
         uid = await convert_mysid(args[3])
     elif args[3] is None:
-        uid = await select_db(qid, mode='uid')
+        uid = await select_db(str(qid), mode='uid')
         uid = str(uid)
     elif len(args[3]) != 9:
         return

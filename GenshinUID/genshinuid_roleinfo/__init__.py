@@ -4,14 +4,12 @@ from nonebot import on_regex
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import Depends, RegexGroup
-from nonebot.adapters.onebot.v11 import (
-    MessageSegment,
-    GroupMessageEvent,
-    PrivateMessageEvent,
-)
+from nonebot.adapters.qqguild import MessageEvent
 
 from .draw_roleinfo_card import draw_pic
+from ..utils.nonebot2.send import local_image
 from ..utils.message.error_reply import UID_HINT
+from ..utils.message.cast_type import cast_to_int
 from ..utils.db_operation.db_operation import select_db
 from ..utils.message.get_image_and_at import ImageAndAt
 from ..utils.mhy_api.convert_mysid_to_uid import convert_mysid
@@ -28,16 +26,16 @@ get_role_info = on_regex(
 @get_role_info.handle()
 @handle_exception('查询角色信息')
 async def send_role_info(
-    event: Union[GroupMessageEvent, PrivateMessageEvent],
+    event: MessageEvent,
     matcher: Matcher,
     args: Tuple[Any, ...] = RegexGroup(),
     custom: ImageAndAt = Depends(),
 ):
-    qid = event.user_id
     at = custom.get_first_at()
+    qid = at or cast_to_int(event.author)
     if at:
         qid = at
-
+    qid = str(qid)
     # 判断uid
     if args[2] != 'mys':
         if args[3] is None:
@@ -63,6 +61,6 @@ async def send_role_info(
     if isinstance(im, str):
         await matcher.finish(im)
     elif isinstance(im, bytes):
-        await matcher.finish(MessageSegment.image(im))
+        await matcher.finish(local_image(im))
     else:
         await matcher.finish('发生了未知错误,请联系管理员检查后台输出!')
