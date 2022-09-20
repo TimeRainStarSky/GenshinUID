@@ -3,12 +3,7 @@ import re
 from nonebot import on_command
 from nonebot.matcher import Matcher
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import (
-    Bot,
-    Message,
-    MessageSegment,
-    GroupMessageEvent,
-)
+from nonebot.adapters.qqguild import Bot, Message, MessageEvent
 
 from ..config import priority
 from ..utils.exception.handle_exception import handle_exception
@@ -27,11 +22,12 @@ get_cost = on_command('材料', priority=priority)
 get_polar = on_command('命座', priority=priority)
 get_talents = on_command('天赋', priority=priority)
 get_enemies = on_command('原魔', priority=priority)
-get_audio = on_command('语音', priority=priority)
+# get_audio = on_command('语音', priority=priority)
 get_artifacts = on_command('圣遗物', priority=priority)
 get_food = on_command('食物', priority=priority)
 
 
+'''频道无法使用语音相关
 @get_audio.handle()
 @handle_exception('语音', '语音发送失败，可能是FFmpeg环境未配置。')
 async def send_audio(matcher: Matcher, args: Message = CommandArg()):
@@ -45,6 +41,7 @@ async def send_audio(matcher: Matcher, args: Message = CommandArg()):
             await matcher.finish(im)
         else:
             await matcher.finish(MessageSegment.record(im))
+'''
 
 
 @get_enemies.handle()
@@ -84,11 +81,12 @@ async def send_weapon(matcher: Matcher, args: Message = CommandArg()):
     await matcher.finish(im)
 
 
+'''频道无法发送合并转发消息
 @get_talents.handle()
 @handle_exception('天赋')
 async def send_talents(
     bot: Bot,
-    event: GroupMessageEvent,
+    event: MessageEvent,
     matcher: Matcher,
     args: Message = CommandArg(),
 ):
@@ -106,6 +104,7 @@ async def send_talents(
     else:
         im = '参数不正确。'
     await matcher.finish(im)
+'''
 
 
 @get_char.handle()
